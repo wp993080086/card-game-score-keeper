@@ -15,19 +15,19 @@
 		{
 			"path": "pages/room/index",
 			"style": {
-				"navigationBarTitleText": "房间"
+				"navigationStyle": "custom"
 			}
 		},
 		{
-			"path": "pages/settleAccounts/index",
+			"path": "pages/settlement/index",
 			"style": {
-				"navigationBarTitleText": "结算"
+				"navigationStyle": "custom"
 			}
 		},
 		{
-			"path": "pages/instructions/index",
+			"path": "pages/manual/index",
 			"style": {
-				"navigationBarTitleText": "说明"
+				"navigationStyle": "custom"
 			}
 		}
 	],
@@ -56,7 +56,7 @@
 				"selectedIconPath": "/static/images/tabbar/pinia2.png"
 			},
 			{
-				"pagePath": "pages/settleAccounts/index",
+				"pagePath": "pages/settlement/index",
 				"text": "结算",
 				"iconPath": "/static/images/tabbar/charts1.png",
 				"selectedIconPath": "/static/images/tabbar/charts2.png"
