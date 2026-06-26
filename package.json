@@ -1,0 +1,88 @@
+{
+	"name": "card-game-score-keeper",
+	"private": true,
+	"version": "1.0.0",
+	"author": {
+		"name": "鹏多多",
+		"email": "993080086@qq.com",
+		"url": "https://github.com/wp993080086"
+	},
+	"scripts": {
+		"dev": "uni",
+		"dev:weixin": "uni -p mp-weixin",
+		"dev:h5": "uni",
+		"dev:app": "uni -p app",
+		"dev:app-android": "uni -p app-android",
+		"dev:app-ios": "uni -p app-ios",
+		"build": "uni build",
+		"build:h5": "uni build",
+		"build:weixin": "uni build -p mp-weixin",
+		"build:app": "uni build -p app",
+		"build:app-android": "uni build -p app-android",
+		"build:app-ios": "uni build -p app-ios",
+		"lint": "eslint --ext .js,.ts,.tsx,.vue --ignore-path .gitignore --fix src",
+		"fix": "eslint --fix ./src --ext .vue,.js,.ts,.tsx",
+		"format": "prettier . --write",
+		"prepare": "husky",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"@dcloudio/uni-app": "3.0.0-3060520221121001",
+		"@dcloudio/uni-app-plus": "3.0.0-3060520221121001",
+		"@dcloudio/uni-components": "3.0.0-3060520221121001",
+		"@dcloudio/uni-h5": "3.0.0-3060520221121001",
+		"@dcloudio/uni-mp-weixin": "3.0.0-3060520221121001",
+		"@dcloudio/uni-ui": "^1.4.12",
+		"vue": "3.5.32",
+		"vue-router": "5.0.4"
+	},
+	"devDependencies": {
+		"@dcloudio/types": "^3.4.8",
+		"@dcloudio/uni-automator": "3.0.0-5000720260410001",
+		"@dcloudio/uni-cli-shared": "3.0.0-5000720260410001",
+		"@dcloudio/uni-stacktracey": "3.0.0-5000720260410001",
+		"@dcloudio/vite-plugin-uni": "3.0.0-5000720260410001",
+		"@vue/runtime-core": "^3.4.21",
+		"@eslint/js": "^10.0.1",
+		"@types/node": "^25.4.0",
+		"@typescript-eslint/eslint-plugin": "^8.57.0",
+		"@typescript-eslint/parser": "^8.57.0",
+		"@vitejs/plugin-vue": "^6.0.4",
+		"autoprefixer": "^10.4.27",
+		"eslint": "^10.1.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.5",
+		"eslint-plugin-vue": "^10.8.0",
+		"globals": "^17.4.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.3.3",
+		"postcss-preset-env": "^11.2.0",
+		"prettier": "^3.8.1",
+		"sass": "1.99.0",
+		"typescript": "6.0.2",
+		"typescript-eslint": "8.58.0",
+		"uni-app-types": "^0.1.7",
+		"vite": "5.2.8"
+	},
+	"lint-staged": {
+		"no-stash": "true",
+		"*.{js,ts,vue,tsx}": [
+			"eslint --fix",
+			"prettier --write"
+		],
+		"*.{css,scss,json}": [
+			"prettier --write"
+		]
+	},
+	"engines": {
+		"node": ">=22.22.1"
+	},
+	"browserslist": [
+		"chrome >= 87",
+		"firefox >= 78",
+		"safari >= 14",
+		"edge >= 88",
+		"> 1%",
+		"not dead"
+	]
+}

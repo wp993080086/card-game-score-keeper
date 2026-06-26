@@ -1,0 +1,66 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+		}
+	},
+	"pages": [
+		{
+			"path": "pages/home/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/room/index",
+			"style": {
+				"navigationBarTitleText": "房间"
+			}
+		},
+		{
+			"path": "pages/settleAccounts/index",
+			"style": {
+				"navigationBarTitleText": "结算"
+			}
+		},
+		{
+			"path": "pages/instructions/index",
+			"style": {
+				"navigationBarTitleText": "说明"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-template",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#bfbfbf",
+		"selectedColor": "#1296db",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/home/index",
+				"text": "首页",
+				"iconPath": "static/images/tabbar/home1.png",
+				"selectedIconPath": "static/images/tabbar/home2.png"
+			},
+			{
+				"pagePath": "pages/room/index",
+				"text": "房间",
+				"iconPath": "static/images/tabbar/pinia1.png",
+				"selectedIconPath": "static/images/tabbar/pinia2.png"
+			},
+			{
+				"pagePath": "pages/settleAccounts/index",
+				"text": "结算",
+				"iconPath": "static/images/tabbar/charts1.png",
+				"selectedIconPath": "static/images/tabbar/charts2.png"
+			}
+		]
+	}
+}
