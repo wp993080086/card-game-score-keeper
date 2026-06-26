@@ -151,15 +151,13 @@ export const validateMobile = (value: string, callback: TFunc) => {
 export const throttle = (fn: TFunc, limit = 200) => {
 	let wait = false
 
-	const _this = this
-
-	return function (_this: TAny, ...args: Array<TAny>) {
+	return function (this: TAny, ...args: Array<TAny>) {
 		if (wait === false) {
 			wait = true
 			setTimeout(() => {
 				wait = false
 			}, limit)
-			return fn.apply(_this, args)
+			return fn.apply(this, args)
 		}
 		return null
 	}
@@ -173,18 +171,15 @@ export const throttle = (fn: TFunc, limit = 200) => {
 export const debounce = (wait: number, fn: TFunc, immediate = false) => {
 	let timeout: TAny
 
-	const _this = this
-
-	const debounced = function (_this: TAny, ...args: Array<TAny>) {
+	const debounced = function (this: TAny, ...args: Array<TAny>) {
 		const later = () => {
-			timeout
 			if (immediate !== true) {
-				fn.apply(_this, args)
+				fn.apply(this, args)
 			}
 		}
 		clearTimeout(timeout)
 		if (immediate === true && timeout === undefined) {
-			fn.apply(_this, args)
+			fn.apply(this, args)
 		}
 		timeout = setTimeout(later, wait)
 	}

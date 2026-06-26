@@ -53,8 +53,6 @@ export default [
 	...tseslint.configs.recommended,
 	// 引入`eslint-plugin-vue` 插件的推荐规则
 	...pluginVue.configs['flat/recommended'],
-	// 引入 `eslint-plugin-vue` 插件的必要规则
-	...pluginVue.configs['flat/essential'],
 	/**
 	 * @description 集成 prettier 配置;
 	 * @description 会合并根目录下的.prettier.config.js 文件;

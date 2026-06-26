@@ -6,5 +6,17 @@ export default defineConfig({
 	plugins: [uni()],
 	resolve: {
 		alias: [{ find: '@', replacement: './src' }]
+	},
+	css: {
+		preprocessorOptions: {
+			scss: {
+				api: 'modern-compiler'
+			}
+		}
+	},
+	// 过滤 uni 插件内部废弃 API 警告（上游依赖问题，项目无法控制）
+	onwarn(warning, warn) {
+		if (warning.plugin === 'uni:h5-css') return
+		warn(warning)
 	}
 })

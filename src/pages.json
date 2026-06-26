@@ -46,20 +46,20 @@
 			{
 				"pagePath": "pages/home/index",
 				"text": "首页",
-				"iconPath": "static/images/tabbar/home1.png",
-				"selectedIconPath": "static/images/tabbar/home2.png"
+				"iconPath": "/static/images/tabbar/home1.png",
+				"selectedIconPath": "/static/images/tabbar/home2.png"
 			},
 			{
 				"pagePath": "pages/room/index",
 				"text": "房间",
-				"iconPath": "static/images/tabbar/pinia1.png",
-				"selectedIconPath": "static/images/tabbar/pinia2.png"
+				"iconPath": "/static/images/tabbar/pinia1.png",
+				"selectedIconPath": "/static/images/tabbar/pinia2.png"
 			},
 			{
 				"pagePath": "pages/settleAccounts/index",
 				"text": "结算",
-				"iconPath": "static/images/tabbar/charts1.png",
-				"selectedIconPath": "static/images/tabbar/charts2.png"
+				"iconPath": "/static/images/tabbar/charts1.png",
+				"selectedIconPath": "/static/images/tabbar/charts2.png"
 			}
 		]
 	}

@@ -1,5 +1,5 @@
-import { Toast } from '../utils/toast/toast.js'
-import { THeaderOption, TPatamOption } from './type.js'
+import { Toast } from '../utils/toast/toast'
+import type { THeaderOption, TPatamOption } from './type.d'
 
 const baseURL = ''
 const headerOption: THeaderOption = {
@@ -48,7 +48,7 @@ const Request = {
 				header: headerOption,
 				success: (res) => {
 					if (res.statusCode === 200) {
-						reject(res)
+						resolve(res.data)
 					} else {
 						reject(res)
 					}
