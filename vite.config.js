@@ -10,7 +10,9 @@ export default defineConfig({
 	css: {
 		preprocessorOptions: {
 			scss: {
-				api: 'modern-compiler'
+				api: 'modern-compiler',
+				// 全局注入公共scss，所有页面自动加载
+				additionalData: `@use "@/styles/common.scss" as *;`
 			}
 		}
 	},

@@ -7,35 +7,23 @@
 	},
 	"pages": [
 		{
-			"path": "pages/home/index",
-			"style": {
-				"navigationStyle": "custom"
-			}
+			"path": "pages/home/index"
 		},
 		{
-			"path": "pages/room/index",
-			"style": {
-				"navigationStyle": "custom"
-			}
+			"path": "pages/room/index"
 		},
 		{
-			"path": "pages/settlement/index",
-			"style": {
-				"navigationStyle": "custom"
-			}
+			"path": "pages/settlement/index"
 		},
 		{
-			"path": "pages/manual/index",
-			"style": {
-				"navigationStyle": "custom"
-			}
+			"path": "pages/manual/index"
 		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-template",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
+		"navigationBarTitleText": "打牌好友记账",
+		"navigationBarBackgroundColor": "#ffffff",
+		"backgroundColor": "#ffffff"
 	},
 	"tabBar": {
 		"color": "#bfbfbf",

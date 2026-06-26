@@ -1,3 +1,47 @@
-.home {
+.home-page {
 	width: 100%;
+	padding-top: 16px;
+	padding-left: 16px;
+	padding-right: 16px;
+	.user-section {
+		@include flex_center;
+		flex-direction: column;
+		gap: 8px;
+		width: 100%;
+		padding: 16px;
+		background-color: #ffffff;
+		border-radius: 12px;
+		.avatar {
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			background-color: #f8fafb;
+		}
+		.username {
+			text-align: center;
+			width: 100%;
+			font-size: 16px;
+			font-weight: 500;
+			color: #000000;
+		}
+		.summary {
+			width: 100%;
+			text-align: center;
+			.green {
+				font-size: 14px;
+				font-weight: 600;
+				color: #4caf50;
+			}
+			.warning {
+				font-size: 14px;
+				font-weight: 600;
+				color: #ff9800;
+			}
+			.text {
+				font-size: 14px;
+				font-weight: 600;
+				color: #666666;
+			}
+		}
+	}
 }
