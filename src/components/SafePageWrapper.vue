@@ -7,7 +7,7 @@
 <style lang="scss" scoped>
 .safe-page-wrapper {
 	width: 100%;
-	min-height: 100vh;
+	height: 100%;
 	background-color: #f8fafb;
 	/* 兼容老iOS */
 	padding-top: constant(safe-area-inset-top);

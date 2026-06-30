@@ -1,47 +1,109 @@
 .home-page {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-direction: column;
 	width: 100%;
+	height: 100%;
 	padding-top: 16px;
 	padding-left: 16px;
 	padding-right: 16px;
-	.user-section {
-		@include flex_center;
-		flex-direction: column;
-		gap: 8px;
+	.info-content {
 		width: 100%;
-		padding: 16px;
-		background-color: #ffffff;
-		border-radius: 12px;
-		.avatar {
-			width: 80px;
-			height: 80px;
-			border-radius: 50%;
-			background-color: #f8fafb;
-		}
-		.username {
-			text-align: center;
+		height: fit-content;
+		.user-section {
+			@include flex_center;
+			flex-direction: column;
+			gap: 8px;
 			width: 100%;
-			font-size: 16px;
+			padding: 16px;
+			background-color: #ffffff;
+			border-radius: 12px;
+			.avatar {
+				width: 80px;
+				height: 80px;
+				border-radius: 50%;
+				background-color: #f9f9f9;
+				overflow: hidden;
+				image {
+					width: 100%;
+					height: 100%;
+				}
+			}
+			.username {
+				text-align: center;
+				width: 100%;
+				font-size: 16px;
+				font-weight: 500;
+				color: #000000;
+			}
+			.summary {
+				@include flex_center;
+				flex-wrap: wrap;
+				width: 100%;
+				text-align: center;
+				.green {
+					font-size: 14px;
+					font-weight: 600;
+					color: #4caf50;
+				}
+				.warning {
+					font-size: 14px;
+					font-weight: 600;
+					color: #ff9800;
+				}
+				.text {
+					font-size: 14px;
+					font-weight: 600;
+					color: #666666;
+				}
+				.icon {
+					width: 13px;
+					height: 13px;
+				}
+			}
+		}
+		.button-section {
+			@include flex_center;
+			gap: 16px;
+			padding-top: 20px;
+			.button {
+				flex: 1;
+				@include flex_center;
+				height: 40px;
+				border-radius: 20px;
+				font-size: 16px;
+				font-weight: 600;
+			}
+			.full {
+				background-color: #ff7a45;
+				color: #ffffff;
+			}
+			.plain {
+				border: 1px solid #ff7a45;
+				color: #ff7a45;
+			}
+		}
+	}
+	.operate-content {
+		@include flex_center;
+		flex-wrap: wrap;
+		gap: 12px;
+		width: 100%;
+		height: fit-content;
+		margin-bottom: 36px;
+		.button {
+			@include flex_center;
+			height: 28px;
+			padding: 0px 16px;
+			border: 1px solid #c1c1c1;
+			border-radius: 14px;
+			font-size: 14px;
 			font-weight: 500;
 			color: #000000;
-		}
-		.summary {
-			width: 100%;
-			text-align: center;
-			.green {
-				font-size: 14px;
-				font-weight: 600;
-				color: #4caf50;
-			}
-			.warning {
-				font-size: 14px;
-				font-weight: 600;
-				color: #ff9800;
-			}
-			.text {
-				font-size: 14px;
-				font-weight: 600;
-				color: #666666;
-			}
+			background-color: #ffffff;
+			margin-left: 0px;
+			margin-right: 0px;
 		}
 	}
 }

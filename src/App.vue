@@ -14,6 +14,4 @@ export default {
 
 <style lang="scss">
 @use '@/styles/reset.scss' as *;
-// @use '@/styles/color.scss' as *;
-// @use '@/styles/common.scss' as *;
 </style>

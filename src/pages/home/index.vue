@@ -1,18 +1,36 @@
 <template>
 	<SafePageWrapper>
 		<view class="home-page">
-			<view class="user-section">
-				<view class="avatar"></view>
-				<text class="username" @click="() => {}">法外狂徒</text>
-				<view class="summary">
-					<text class="text">赢</text>
-					<text class="green">&nbsp;3&nbsp;</text>
-					<text class="text">次&nbsp;&nbsp;/&nbsp;&nbsp;输&nbsp;</text>
-					<text class="warning">&nbsp;3&nbsp;</text>
-					<text class="text">次&nbsp;&nbsp;/&nbsp;&nbsp;胜率&nbsp;</text>
-					<text class="green">25%&nbsp;</text>
-					<text class="red">&nbsp;&nbsp;战绩 ></text>
+			<!-- 信息 -->
+			<view class="info-content">
+				<!-- 用户 -->
+				<view class="user-section">
+					<view class="avatar">
+						<image class="icon" mode="aspectFit" src="../../static/images/avatar0.png" />
+					</view>
+					<text class="username" @click="() => {}">法外狂徒</text>
+					<view class="summary">
+						<text class="text">赢</text>
+						<text class="green">&nbsp;3&nbsp;</text>
+						<text class="text">次&nbsp;&nbsp;/&nbsp;&nbsp;输&nbsp;</text>
+						<text class="warning">&nbsp;3&nbsp;</text>
+						<text class="text">次&nbsp;&nbsp;/&nbsp;&nbsp;胜率&nbsp;</text>
+						<text class="green">25%&nbsp;</text>
+						<text class="text">&nbsp;&nbsp;战绩</text>
+						<image class="icon" mode="aspectFit" src="../../static/icon/more.png" />
+					</view>
 				</view>
+				<!-- 按钮 -->
+				<view class="button-section">
+					<button class="button full" @click="_createRoom">创建房间</button>
+					<button class="button plain" @click="_joinRoom">扫码进房</button>
+				</view>
+			</view>
+			<!-- 操作 -->
+			<view class="operate-content">
+				<button class="button" @click="_updateProfile">更新头像昵称</button>
+				<button class="button" @click="_usageGuide">说明书</button>
+				<button class="button" @click="_contactSupport">联系客服</button>
 			</view>
 		</view>
 	</SafePageWrapper>
@@ -22,31 +40,29 @@
 import { ref } from 'vue'
 import SafePageWrapper from '@/components/SafePageWrapper.vue'
 
-interface Record {
-	name: string
-	date: string
-	amount: string
-	result: 'win' | 'lose'
-	avatarBg: string
-	avatarText: string
+/** @description 创建房间*/
+const _createRoom = () => {
+	uni.navigateTo({ url: '/pages/room/index' })
 }
 
-const records = ref<Record[]>([
-	{ name: '欢乐斗地主', date: '03-15 14:30', amount: '200', result: 'win', avatarBg: '#ffe0e0', avatarText: '欢' },
-	{ name: '德州扑克', date: '03-14 20:00', amount: '150', result: 'lose', avatarBg: '#e0f0ff', avatarText: '德' },
-	{ name: '跑得快', date: '03-12 21:30', amount: '80', result: 'lose', avatarBg: '#e8ffe8', avatarText: '跑' }
-])
+/** @description 扫码进房*/
+const _joinRoom = () => {
+	uni.showToast({ title: '即将上线', icon: 'none' })
+}
 
-const padRank = (n: number) => (n < 10 ? '0' + n : String(n))
+/** @description 更新头像昵称*/
+const _updateProfile = () => {
+	uni.showToast({ title: '即将上线', icon: 'none' })
+}
 
-const handleUserProfile = () => uni.showToast({ title: '个人主页功能即将上线', icon: 'none' })
-const handleCreateRoom = () => uni.navigateTo({ url: '/pages/room/index' })
-const handleJoinRoom = () => uni.showToast({ title: '输入房间码加入', icon: 'none' })
-const handleScoreKeeper = () => uni.showToast({ title: '记牌器功能即将上线', icon: 'none' })
-const handleRecords = () => uni.showToast({ title: '战绩功能即将上线', icon: 'none' })
-const handleViewAll = () => uni.showToast({ title: '查看全部战绩', icon: 'none' })
-const switchTab = (tab: string) => {
-	if (tab === 'room') uni.navigateTo({ url: '/pages/room/index' })
+/** @description 使用手册*/
+const _usageGuide = () => {
+	uni.navigateTo({ url: '/pages/manual/index' })
+}
+
+/** @description 联系客服*/
+const _contactSupport = () => {
+	uni.showToast({ title: '即将上线', icon: 'none' })
 }
 </script>
 
