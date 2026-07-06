@@ -2,46 +2,82 @@
 	<SafePageWrapper>
 		<view class="room-page">
 			<!-- 顶部公告 -->
-			<view class="notification-wrapper">本平台不涉及赌博和金钱，具体请查看使用手册。</view>
+			<view class="notification-wrapper" @click="_openQrCode">本平台不涉及赌博和金钱，具体请查看使用手册。</view>
 			<!-- 顶部头像 -->
-			<view class="avatar-wrapper">
+			<scroll-view class="avatar-wrapper" scroll-x="true">
 				<!-- 用户 -->
 				<view class="item user">
 					<view class="avatar">
 						<image class="icon" mode="aspectFit" src="../../static/images/avatar0.png" />
 					</view>
-					<text class="nickname">张三</text>
+					<view class="nickname">
+						<text class="text">法外狂徒</text>
+					</view>
 				</view>
 				<!-- 邀请 -->
 				<view class="item invite">
 					<view class="avatar">+</view>
-					<text>邀请</text>
-				</view>
-			</view>
-			<!-- 消息列表 -->
-			<view class="message-wrapper">
-				<template v-for="item in messageList">
-					<!-- 各种消息 -->
-					<view :class="[['self', 'other'].includes(item.type) ? 'message-item' : '', item.type]">
-						<!-- 非聊天内容 -->
-						<template v-if="['system', 'payment', 'warning'].includes(item.type)">
-							<text class="text">{{ item.content }}</text>
-						</template>
-						<!-- 自己 -->
-						<template v-else-if="['self'].includes(item.type)">
-							<view class="content">{{ item.content }}</view>
-						</template>
-						<!-- 其他 -->
-						<template v-else>
-							<view class="avatar">
-								<image class="icon" mode="aspectFit" :src="item.avatar || '../../static/images/avatar0.png'" />
-							</view>
-							<view class="content">{{ item.content }}</view>
-						</template>
+					<view class="nickname">
+						<text class="text">邀请</text>
 					</view>
-				</template>
-			</view>
+				</view>
+			</scroll-view>
+			<!-- 消息列表 -->
+			<scroll-view class="message-wrapper" scroll-y="true">
+				<view class="message-list">
+					<template v-for="item in messageList">
+						<!-- 各种消息 -->
+						<view :class="[['self', 'other'].includes(item.type) ? 'message-item' : '', item.type]">
+							<!-- 非聊天内容 -->
+							<template v-if="['system', 'payment', 'warning'].includes(item.type)">
+								<text class="text">{{ item.content }}</text>
+							</template>
+							<!-- 自己 -->
+							<template v-else-if="['self'].includes(item.type)">
+								<view class="content">{{ item.content }}</view>
+							</template>
+							<!-- 其他 -->
+							<template v-else>
+								<view class="avatar">
+									<image class="icon" mode="aspectFit" :src="item.avatar || '../../static/images/avatar0.png'" />
+								</view>
+								<view class="content">{{ item.content }}</view>
+							</template>
+						</view>
+					</template>
+				</view>
+			</scroll-view>
 		</view>
+		<!-- 分享弹窗 -->
+		<uni-popup ref="qrPopup" type="center">
+			<view class="popup-wrapper">
+				<!-- 关闭按钮 -->
+				<view class="close-btn" @click="_closeQrCode">✕</view>
+				<!-- 标题区域 -->
+				<view class="title-area">
+					<text class="desc">微信扫描二维码加入</text>
+					<view class="room-id">
+						<text class="label">房号：</text>
+						<text class="value">mucj</text>
+					</view>
+					<text class="hint">邀请好友扫描以下二维码加入房间</text>
+				</view>
+				<!-- 二维码区域 -->
+				<view class="qr-area">
+					<view class="qr-border">
+						<view class="qr-placeholder" />
+					</view>
+				</view>
+				<!-- 提示文字 -->
+				<view class="tip-text">
+					<text>也可以通过</text>
+					<text class="highlight">转发</text>
+					<text>让好友加入</text>
+				</view>
+				<!-- 转发按钮 -->
+				<view class="share-btn">转发给好友</view>
+			</view>
+		</uni-popup>
 	</SafePageWrapper>
 </template>
 
@@ -54,6 +90,7 @@ defineOptions({
 	name: 'Room'
 })
 
+// mock数据
 const _mockMessageList: I_MessageItem[] = [
 	{
 		type: 'system',
@@ -92,7 +129,20 @@ const _mockMessageList: I_MessageItem[] = [
 	}
 ]
 
+/** @description 消息列表 */
 const messageList = ref<I_MessageItem[]>(_mockMessageList)
-</script>
 
+/** @description 弹窗ref*/
+const qrPopup = ref<TAny>(null)
+
+/** @description 打开扫码分享弹窗*/
+const _openQrCode = () => {
+	qrPopup.value.open()
+}
+
+/** @description 关闭扫码分享弹窗*/
+const _closeQrCode = () => {
+	qrPopup.value.close()
+}
+</script>
 <style lang="scss" scoped src="./style.scss"></style>
