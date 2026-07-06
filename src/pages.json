@@ -16,7 +16,7 @@
 			"path": "pages/settlement/index"
 		},
 		{
-			"path": "pages/manual/index"
+			"path": "pages/guide/index"
 		}
 	],
 	"globalStyle": {

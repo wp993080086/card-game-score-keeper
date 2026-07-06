@@ -37,12 +37,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import SafePageWrapper from '@/components/SafePageWrapper.vue'
+
+defineOptions({
+	name: 'Home'
+})
 
 /** @description 创建房间*/
 const _createRoom = () => {
-	uni.navigateTo({ url: '/pages/room/index' })
+	uni.switchTab({ url: '/pages/room/index' })
 }
 
 /** @description 扫码进房*/
