@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>使用手册</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .manual-card {
+    margin: 0 16px 16px;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+  }
+  .manual-card .title {
+    font-size: 15px; font-weight: 600;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .manual-card .title .ico {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .step {
+    display: flex; gap: 12px;
+    padding: 8px 0;
+  }
+  .step .num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step .text { font-size: 14px; color: var(--text-1); line-height: 1.5; }
+
+  .guide-item {
+    display: flex; gap: 12px;
+    padding: 10px 0;
+  }
+  .guide-item .ico {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--bg-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .guide-item .body .h { font-size: 14px; font-weight: 500; }
+  .guide-item .body .d { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+  .faq {
+    margin: 0 16px 16px;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 4px 0;
+    box-shadow: var(--shadow-card);
+  }
+  .faq-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-item .q { font-size: 14px; font-weight: 500; }
+  .faq-item .a { font-size: 13px; color: var(--text-2); margin-top: 4px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div class="back">‹</div>
+      <div class="title">使用手册</div>
+      <div class="action">⚙</div>
+    </div>
+
+    <div class="screen no-tabbar">
+      <div class="scroll" style="padding-top:16px">
+
+        <!-- 快速入门 -->
+        <div class="manual-card">
+          <div class="title">
+            <span class="ico" style="background:#e8f7ee;color:#34a35b">🚀</span>
+            <span>快速入门</span>
+          </div>
+          <div class="step">
+            <div class="num">1</div>
+            <div class="text">点击首页「创建房间」，生成 4 位房号</div>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <div class="text">邀请好友扫码加入（最多 4 人）</div>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <div class="text">点击成员头像向他支付积分（仅本人向他人支出）</div>
+          </div>
+          <div class="step">
+            <div class="num">4</div>
+            <div class="text">打完后点结算，自动算最少转账方案</div>
+          </div>
+        </div>
+
+        <!-- 如何记账 -->
+        <div class="manual-card">
+          <div class="title">
+            <span class="ico" style="background:#fff3e8;color:#d96a1f">📝</span>
+            <span>如何记账</span>
+          </div>
+          <div class="guide-item">
+            <div class="ico" style="background:#e3f2fd">→</div>
+            <div class="body">
+              <div class="h">点头像支付</div>
+              <div class="d">点其他成员头像，输入正整数（&gt;0）向他支付积分</div>
+            </div>
+          </div>
+          <div class="guide-item">
+            <div class="ico" style="background:#fff1ed">!</div>
+            <div class="body">
+              <div class="h">转错了</div>
+              <div class="d">本平台不支持撤销，让对方反向转一次即可修正</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="manual-card">
+          <div class="title">
+            <span class="ico" style="background:#f3e8ff;color:#7c4dff">?</span>
+            <span>常见问题</span>
+          </div>
+        </div>
+        <div class="faq">
+          <div class="faq-item">
+            <div class="q">平台会收取费用吗？</div>
+            <div class="a">完全免费，无任何抽成。</div>
+          </div>
+          <div class="faq-item">
+            <div class="q">积分能换成钱吗？</div>
+            <div class="a">本平台只做记账工具，转账由好友间自行完成。</div>
+          </div>
+          <div class="faq-item">
+            <div class="q">房间人数能扩容吗？</div>
+            <div class="a">房主可看广告将上限提升至 6 人或 8 人。</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

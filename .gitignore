@@ -26,3 +26,8 @@ dist-ssr
 tsconfig.tsbuildinfo
 components.d.ts
 auto-imports.d.ts
+
+# 编辑器
+.workbuddy
+.cursor
+.trae

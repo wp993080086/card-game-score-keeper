@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打牌好友记账 · 设计稿总览</title>
+<style>
+  body {
+    font-family: 'PingFang SC', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+    margin: 0; padding: 40px 24px;
+    background: #f0f2f5;
+    color: #1f2329;
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; }
+  .sub { color: #86909c; font-size: 13px; margin-bottom: 32px; }
+  /* 卡片宽度 = iframe 439px + 两侧内边距 16px = 471px（iframe 居中，灰色边框 32px 让 phone 视觉居中） */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 471px);
+    gap: 24px;
+    justify-content: center;
+  }
+  .card {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
+  }
+  .card:hover { transform: translateY(-4px); }
+  .card a { display: block; padding: 16px; text-decoration: none; color: inherit; }
+  iframe {
+    width: 439px; height: 824px;           /* phone 375x760 外各包 32px，上下左右一致 */
+    border: none;
+    border-radius: 48px;                  /* 与 phone 圆角对齐 */
+    margin: 0 auto;
+    background: #f0f2f5;
+    display: block;
+  }
+  .card .meta { padding: 16px 8px 0; }
+  .card .name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .card .desc { font-size: 12px; color: #86909c; line-height: 1.5; }
+  .card .file { font-size: 11px; color: #4a78d9; margin-top: 12px; font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>打牌好友记账 · 设计稿</h1>
+<div class="sub">375px 移动端 · 共 8 个页面</div>
+
+<div class="grid">
+  <div class="card">
+    <a href="home.html" target="_blank">
+      <iframe src="home.html"></iframe>
+      <div class="meta">
+        <div class="name">首页</div>
+        <div class="desc">用户信息卡、进行中牌局、创建房间/扫码进房</div>
+        <div class="file">home.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="room.html" target="_blank">
+      <iframe src="room.html"></iframe>
+      <div class="meta">
+        <div class="name">房间页</div>
+        <div class="desc">成员头像条（房主右下角角标）、系统/支付/聊天消息、快捷语句</div>
+        <div class="file">room.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="transfer-input.html" target="_blank">
+      <iframe src="transfer-input.html"></iframe>
+      <div class="meta">
+        <div class="name">点头像 · 支出 dialog</div>
+        <div class="desc">点其他成员头像弹出：支出 / 给 xxx / 输入正整数 / 取消·确定</div>
+        <div class="file">transfer-input.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="qr-popup.html" target="_blank">
+      <iframe src="qr-popup.html"></iframe>
+      <div class="meta">
+        <div class="name">房间二维码弹窗</div>
+        <div class="desc">居中大码 + 房号 + 转发按钮</div>
+        <div class="file">qr-popup.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="settlement.html" target="_blank">
+      <iframe src="settlement.html"></iframe>
+      <div class="meta">
+        <div class="name">结算页</div>
+        <div class="desc">MVP 区（头像+皇冠角标）、最少转账方案、2×2 功能格、退出按钮</div>
+        <div class="file">settlement.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="records.html" target="_blank">
+      <iframe src="records.html"></iframe>
+      <div class="meta">
+        <div class="name">战绩（tab2）</div>
+        <div class="desc">累计统计、按时间归档的历史对局列表</div>
+        <div class="file">records.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="room-detail.html" target="_blank">
+      <iframe src="room-detail.html"></iframe>
+      <div class="meta">
+        <div class="name">对局详情页</div>
+        <div class="desc">结算方案 → 每人累计输赢（纯转账模型，无对局明细）</div>
+        <div class="file">room-detail.html</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="card">
+    <a href="manual.html" target="_blank">
+      <iframe src="manual.html"></iframe>
+      <div class="meta">
+        <div class="name">使用手册</div>
+        <div class="desc">快速入门、点头像支付说明、常见问题</div>
+        <div class="file">manual.html</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

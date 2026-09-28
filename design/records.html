@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>战绩</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .summary {
+    margin: 0 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #edf2fc 0%, #f5f8ff 100%);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .summary .stat { text-align: center; flex: 1; }
+  .summary .stat .num {
+    font-size: 22px; font-weight: 700; color: var(--text-1);
+  }
+  .summary .stat.win .num { color: var(--win); }
+  .summary .stat.lose .num { color: var(--lose); }
+  .summary .stat .label { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+  .summary .divider { width: 1px; height: 32px; background: #d6e0f5; }
+
+  .group-title {
+    font-size: 12px; color: var(--text-3);
+    margin: 0 16px;
+    padding: 16px 0 8px;
+    font-weight: 500;
+  }
+  .record-list {
+    margin: 0 16px;
+    background: var(--bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .record-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .record-item:last-child { border-bottom: none; }
+  .record-item .meta { flex: 1; }
+  .record-item .room {
+    font-size: 15px; font-weight: 500; color: var(--text-1);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .record-item .room .code {
+    font-family: monospace; font-size: 13px;
+    color: var(--text-2); background: var(--bg-2);
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .record-item .sub {
+    font-size: 12px; color: var(--text-3); margin-top: 2px;
+  }
+  .record-item .amount {
+    font-size: 16px; font-weight: 700;
+  }
+  .record-item .arrow { color: var(--text-4); font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div></div>
+      <div class="title">战绩</div>
+      <div class="action">⌕</div>
+    </div>
+
+    <div class="screen">
+      <div class="scroll">
+        <!-- 累计统计 -->
+        <div class="summary">
+          <div class="stat">
+            <div class="num">12</div>
+            <div class="label">总局数</div>
+          </div>
+          <div class="divider"></div>
+          <div class="stat win">
+            <div class="num">58%</div>
+            <div class="label">胜率</div>
+          </div>
+          <div class="divider"></div>
+          <div class="stat win">
+            <div class="num">+320</div>
+            <div class="label">累计积分</div>
+          </div>
+        </div>
+
+        <!-- 今天 -->
+        <div class="group-title">今天</div>
+        <div class="record-list">
+          <div class="record-item">
+            <div class="avatar">房</div>
+            <div class="meta">
+              <div class="room">牌局 <span class="code">mucj</span></div>
+              <div class="sub">4 人 · 14:20 · 共 3 局</div>
+            </div>
+            <div class="amount text-lose">-80</div>
+            <div class="arrow">›</div>
+          </div>
+        </div>
+
+        <!-- 昨天 -->
+        <div class="group-title">昨天</div>
+        <div class="record-list">
+          <div class="record-item">
+            <div class="avatar win-bg">房</div>
+            <div class="meta">
+              <div class="room">牌局 <span class="code">a8kp</span></div>
+              <div class="sub">3 人 · 21:05 · 共 5 局</div>
+            </div>
+            <div class="amount text-win">+150</div>
+            <div class="arrow">›</div>
+          </div>
+          <div class="record-item">
+            <div class="avatar" style="background:#e8f7ee;color:#34a35b">房</div>
+            <div class="meta">
+              <div class="room">牌局 <span class="code">n2qx</span></div>
+              <div class="sub">3 人 · 15:30 · 共 2 局</div>
+            </div>
+            <div class="amount text-win">+50</div>
+            <div class="arrow">›</div>
+          </div>
+        </div>
+
+        <!-- 更早 -->
+        <div class="group-title">本周更早</div>
+        <div class="record-list">
+          <div class="record-item">
+            <div class="avatar lose-bg">房</div>
+            <div class="meta">
+              <div class="room">牌局 <span class="code">t9me</span></div>
+              <div class="sub">4 人 · 周三 19:00 · 共 4 局</div>
+            </div>
+            <div class="amount text-lose">-40</div>
+            <div class="arrow">›</div>
+          </div>
+          <div class="record-item">
+            <div class="avatar" style="background:#f3e8ff;color:#7c4dff">房</div>
+            <div class="meta">
+              <div class="room">牌局 <span class="code">x7w2</span></div>
+              <div class="sub">4 人 · 周一 20:30 · 共 6 局</div>
+            </div>
+            <div class="amount text-win">+240</div>
+            <div class="arrow">›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="item">
+        <div class="ico">⌂</div>
+        <div>首页</div>
+      </div>
+      <div class="item active">
+        <div class="ico">📊</div>
+        <div>战绩</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

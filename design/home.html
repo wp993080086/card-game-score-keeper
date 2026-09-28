@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>首页</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .user-card {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0 16px;
+    padding: 16px 0;
+  }
+  .user-card .info { flex: 1; }
+  .user-card .nick { font-size: 17px; font-weight: 600; }
+  .user-card .sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+  .user-card .edit { font-size: 18px; color: var(--text-3); }
+
+  .ongoing {
+    margin: 16px 16px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, #edf2fc 0%, #f5f8ff 100%);
+    border-radius: 16px;
+    border: 1px solid #dde7fa;
+  }
+  .ongoing .label {
+    font-size: 12px; color: var(--primary-text); font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .ongoing .label .dot {
+    width: 6px; height: 6px; background: var(--primary); border-radius: 50%;
+  }
+  .ongoing .room-id {
+    font-size: 22px; font-weight: 700; color: var(--text-1);
+    margin-top: 6px; letter-spacing: 2px;
+  }
+  .ongoing .members {
+    display: flex; align-items: center; margin-top: 12px;
+  }
+  .ongoing .members .avatar { margin-left: -8px; border: 2px solid #fff; }
+  .ongoing .members .avatar:first-child { margin-left: 0; }
+  .ongoing .cta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed #c9d6f0;
+    color: var(--primary); font-size: 14px; font-weight: 500;
+  }
+  .ongoing .cta .arr { font-size: 18px; }
+
+  .actions {
+    display: flex; gap: 12px;
+    margin: 20px 16px 0;
+  }
+  .actions .btn { flex: 1; }
+
+  .quick {
+    margin: 24px 16px 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .quick .item {
+    background: var(--bg); border-radius: 12px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+    box-shadow: var(--shadow-card);
+  }
+  .quick .item .ico {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--bg-2); display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .quick .item .label { font-size: 14px; color: var(--text-1); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div></div>
+      <div class="title">打牌好友记账</div>
+      <div class="action">⚙</div>
+    </div>
+
+    <div class="screen">
+      <div class="scroll">
+        <!-- 用户卡 -->
+        <div class="card user-card">
+          <div class="avatar lg">法</div>
+          <div class="info">
+            <div class="nick">法外狂徒</div>
+            <div class="sub">累计战绩 12 局 · 胜率 58%</div>
+          </div>
+          <div class="edit">✎</div>
+        </div>
+
+        <!-- 进行中的牌局 -->
+        <div class="ongoing">
+          <div class="label"><span class="dot"></span>进行中的牌局</div>
+          <div class="room-id">mucj</div>
+          <div class="members">
+            <div class="avatar sm">法</div>
+            <div class="avatar sm" style="background:#fff3e8;color:#d96a1f">张</div>
+            <div class="avatar sm" style="background:#fff1ed;color:#d63a3a">李</div>
+            <div class="avatar sm" style="background:#e8f7ee;color:#34a35b">王</div>
+          </div>
+          <div class="cta">
+            <span>继续对局</span>
+            <span class="arr">›</span>
+          </div>
+        </div>
+
+        <!-- 主要操作 -->
+        <div class="actions">
+          <button class="btn primary">+ 创建房间</button>
+          <button class="btn outline">扫码进房</button>
+        </div>
+
+        <!-- 快捷入口 -->
+        <div class="quick">
+          <div class="item">
+            <div class="ico">📖</div>
+            <div class="label">使用手册</div>
+          </div>
+          <div class="item">
+            <div class="ico">💬</div>
+            <div class="label">联系客服</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- tabbar -->
+    <div class="tabbar">
+      <div class="item active">
+        <div class="ico">⌂</div>
+        <div>首页</div>
+      </div>
+      <div class="item">
+        <div class="ico">📊</div>
+        <div>战绩</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

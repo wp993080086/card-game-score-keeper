@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>向成员支付</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .dim-bg {
+    flex: 1;
+    background: var(--bg-2);
+    padding: 16px;
+    opacity: 0.3; filter: blur(2px);
+  }
+  .dim-bg .notice { margin: 0; background: rgba(0,0,0,0.04); }
+  .dim-bg .tap-hint { background: rgba(0,0,0,0.04); }
+
+  /* 居中弹窗 */
+  .mask {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 32px;
+  }
+  .dialog {
+    width: 100%;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 24px 20px 20px;
+    box-shadow: var(--shadow-pop);
+    text-align: center;
+  }
+  .dialog .title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-1);
+  }
+  .dialog .subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-2);
+  }
+  .dialog .subtitle .name {
+    color: var(--primary);
+    font-weight: 500;
+  }
+
+  .input-wrap {
+    margin-top: 20px;
+    display: flex; align-items: center;
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    background: var(--bg);
+    height: 56px;
+    padding: 0 16px;
+    transition: border-color 0.15s;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--primary);
+  }
+  .input-wrap input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-1);
+    outline: none;
+    text-align: center;
+    font-feature-settings: 'tnum';
+    width: 0;
+    min-width: 0;
+  }
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .input-wrap .suffix {
+    font-size: 16px;
+    color: var(--text-3);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+
+  .actions {
+    margin-top: 24px;
+    display: flex; gap: 12px;
+  }
+  .actions .btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div class="back">‹</div>
+      <div class="title">房间 mucj</div>
+      <div class="action">⋯</div>
+    </div>
+
+    <div class="screen no-tabbar" style="position:relative">
+      <div class="dim-bg">
+        <div class="notice">
+          <span class="ico">ⓘ</span>
+          <span>本平台不涉及赌博和金钱</span>
+        </div>
+        <div class="members-bar" style="background:rgba(255,255,255,0.5); border-radius:10px; margin-top:8px">
+          <div class="m-item owner">
+            <div class="avatar" style="position:relative">法</div>
+          </div>
+          <div class="m-item"><div class="avatar win-bg">张</div></div>
+          <div class="m-item"><div class="avatar lose-bg">李</div></div>
+          <div class="m-item"><div class="avatar invite">+</div></div>
+        </div>
+        <div class="tap-hint" style="margin-top:12px">
+          <span class="ico">👆</span>
+          <span>点击其他成员头像，向他支付积分</span>
+        </div>
+      </div>
+
+      <!-- 居中弹窗 -->
+      <div class="mask">
+        <div class="dialog">
+          <div class="title">支出</div>
+          <div class="subtitle">给 <span class="name">李四</span></div>
+
+          <div class="input-wrap">
+            <input type="number" min="1" placeholder="请输入积分" />
+            <span class="suffix">分</span>
+          </div>
+
+          <div class="actions">
+            <button class="btn ghost">取消</button>
+            <button class="btn primary">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

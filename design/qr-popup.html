@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>房间二维码弹窗</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .dim-bg {
+    flex: 1;
+    background: var(--bg-2);
+    padding: 16px;
+    opacity: 0.3; filter: blur(2px);
+  }
+  .dim-bg .notice { background: rgba(0,0,0,0.04); margin: 0; }
+
+  .mask {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .popup {
+    width: 280px;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--shadow-pop);
+    position: relative;
+  }
+  .popup .close {
+    position: absolute; top: 12px; right: 12px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--bg-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text-3);
+    cursor: pointer;
+  }
+  .popup .head {
+    text-align: center;
+    padding-top: 4px;
+  }
+  .popup .head .desc {
+    font-size: 12px; color: var(--text-3);
+  }
+  .popup .head .room-row {
+    margin: 8px 0 4px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .popup .head .label { font-size: 12px; color: var(--text-3); }
+  .popup .head .code {
+    font-family: monospace; font-size: 18px;
+    font-weight: 600; color: var(--text-1); letter-spacing: 2px;
+  }
+  .popup .head .copy {
+    font-size: 11px; color: var(--primary);
+    padding: 2px 8px; background: var(--primary-soft);
+    border-radius: 4px;
+  }
+  .popup .head .hint { font-size: 12px; color: var(--text-2); margin-top: 6px; }
+
+  .qr-area {
+    margin: 16px auto;
+    width: 168px; height: 168px;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 10px;
+    background: #fff;
+    position: relative;
+  }
+  .qr-mock {
+    width: 100%; height: 100%;
+    background-image:
+      radial-gradient(circle at 12px 12px, var(--text-1) 4px, transparent 4px),
+      radial-gradient(circle at 140px 12px, var(--text-1) 4px, transparent 4px),
+      radial-gradient(circle at 12px 140px, var(--text-1) 4px, transparent 4px);
+    background-color:
+      repeating-linear-gradient(45deg, var(--text-1), var(--text-1) 2px, #fff 2px, #fff 6px);
+    background-size: 24px 24px, 24px 24px, 24px 24px;
+    background-repeat: no-repeat;
+    border-radius: 4px;
+    position: relative;
+  }
+  /* pseudo-QR with dots */
+  .qr-mock::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 10% 10%, var(--text-1) 12px, transparent 12px),
+      radial-gradient(circle at 90% 10%, var(--text-1) 12px, transparent 12px),
+      radial-gradient(circle at 10% 90%, var(--text-1) 12px, transparent 12px),
+      radial-gradient(circle at 30% 30%, var(--text-1) 3px, transparent 3px),
+      radial-gradient(circle at 50% 20%, var(--text-1) 3px, transparent 3px),
+      radial-gradient(circle at 70% 40%, var(--text-1) 3px, transparent 3px),
+      radial-gradient(circle at 40% 60%, var(--text-1) 3px, transparent 3px),
+      radial-gradient(circle at 60% 70%, var(--text-1) 3px, transparent 3px),
+      radial-gradient(circle at 80% 80%, var(--text-1) 3px, transparent 3px),
+      radial-gradient(circle at 25% 80%, var(--text-1) 3px, transparent 3px);
+  }
+
+  .tip {
+    text-align: center;
+    font-size: 12px; color: var(--text-2);
+    margin: 12px 0;
+  }
+  .tip .hl { color: var(--primary); font-weight: 500; }
+
+  .share-btn {
+    margin-top: 12px;
+    height: 44px;
+    border-radius: 22px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 15px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div class="back">‹</div>
+      <div class="title">房间 mucj</div>
+      <div class="action">⋯</div>
+    </div>
+
+    <div class="screen no-tabbar" style="position:relative">
+      <div class="dim-bg">
+        <div class="notice" style="background:rgba(0,0,0,0.04)">
+          <span class="ico">ⓘ</span>
+          <span>本平台不涉及赌博和金钱</span>
+        </div>
+      </div>
+
+      <div class="mask">
+        <div class="popup">
+          <div class="close">✕</div>
+          <div class="head">
+            <div class="desc">微信扫描二维码加入</div>
+            <div class="room-row">
+              <span class="label">房号</span>
+              <span class="code">mucj</span>
+              <span class="copy">复制</span>
+            </div>
+            <div class="hint">邀请好友扫描以下二维码加入</div>
+          </div>
+          <div class="qr-area">
+            <div class="qr-mock"></div>
+          </div>
+          <div class="tip">也可以 <span class="hl">转发</span> 给好友加入</div>
+          <div class="share-btn">📤 转发给好友</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

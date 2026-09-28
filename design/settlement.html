@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>结算</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .screen-pad { padding: 16px; }
+
+  /* MVP 区：去掉独立文案，皇冠作为头像右上角角标 */
+  .mvp {
+    background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+    border-radius: 16px;
+    padding: 28px 0 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .mvp .avatar-wrap {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mvp .avatar-wrap .avatar { box-shadow: 0 2px 8px rgba(255, 138, 61, 0.25); }
+  /* 头像右上角皇冠角标 */
+  .mvp .avatar-wrap::after {
+    content: '👑';
+    position: absolute;
+    top: -8px; right: -10px;
+    width: 26px; height: 26px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+  }
+  .mvp .earnings {
+    margin-top: 10px;
+    display: flex; align-items: baseline; gap: 4px;
+  }
+  .mvp .earnings .label { font-size: 12px; color: var(--text-2); }
+  .mvp .earnings .amount { font-size: 22px; font-weight: 700; color: var(--win); }
+
+  .section-title {
+    font-size: 14px; font-weight: 600; color: var(--text-1);
+    margin: 20px 0 10px;
+  }
+
+  .plans {
+    background: var(--bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .plan-item {
+    display: flex; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--divider);
+    gap: 8px;
+  }
+  .plan-item:last-child { border-bottom: none; }
+  .plan-item .avatar {
+    width: 28px; height: 28px; font-size: 12px;
+    flex-shrink: 0;
+  }
+  .plan-item .from {
+    font-size: 14px; font-weight: 500;
+    flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .plan-item .arrow { color: var(--text-4); flex-shrink: 0; }
+  .plan-item .to {
+    font-size: 14px; font-weight: 500;
+    flex: 1; text-align: right;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .plan-item .amount {
+    font-size: 15px; font-weight: 700;
+    color: var(--lose-text);
+    flex-shrink: 0;
+    padding-left: 8px;
+  }
+
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .action-card {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 18px 0;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    box-shadow: var(--shadow-card);
+    text-align: center;
+  }
+  .action-card .ico-wrap {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .action-card .label { font-size: 13px; font-weight: 500; }
+  .action-card.danger .label { color: var(--lose-text); }
+
+  .share-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--divider);
+    padding: 12px 16px;
+    display: flex; gap: 12px;
+  }
+  .share-bar .btn { flex: 1; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div class="back">‹</div>
+      <div class="title">结算</div>
+      <div class="action">⋯</div>
+    </div>
+
+    <div class="screen">
+      <div class="scroll screen-pad">
+        <!-- MVP：头像 + 右上角皇冠角标 + 收益，无姓名文案 -->
+        <div class="mvp">
+          <div class="avatar-wrap">
+            <div class="avatar lg win-bg">张</div>
+          </div>
+          <div class="earnings">
+            <span class="label">MVP 收益</span>
+            <span class="amount">+200 分</span>
+          </div>
+        </div>
+
+        <!-- 结算方案 -->
+        <div class="section-title">结算方案</div>
+        <div class="plans">
+          <div class="plan-item">
+            <div class="avatar lose-bg">李</div>
+            <div class="from">李四</div>
+            <div class="arrow">→</div>
+            <div class="to">张三</div>
+            <div class="amount">200 分</div>
+          </div>
+          <div class="plan-item">
+            <div class="avatar" style="background:#e8f7ee;color:#34a35b">王</div>
+            <div class="from">王五</div>
+            <div class="arrow">→</div>
+            <div class="to">张三</div>
+            <div class="amount">50 分</div>
+          </div>
+          <div class="plan-item">
+            <div class="avatar">法</div>
+            <div class="from">法外狂徒</div>
+            <div class="arrow">→</div>
+            <div class="to">王五</div>
+            <div class="amount">30 分</div>
+          </div>
+        </div>
+
+        <!-- 功能区 -->
+        <div class="section-title">更多</div>
+        <div class="grid-2">
+          <div class="action-card">
+            <div class="ico-wrap" style="background:#fff3e8">🏆</div>
+            <div class="label">排行榜</div>
+          </div>
+          <div class="action-card">
+            <div class="ico-wrap" style="background:#e8f5e9">📋</div>
+            <div class="label">流水明细</div>
+          </div>
+          <div class="action-card">
+            <div class="ico-wrap" style="background:#e3f2fd">📖</div>
+            <div class="label">使用手册</div>
+          </div>
+          <div class="action-card danger">
+            <div class="ico-wrap" style="background:#fff1ed;color:#f76565">✕</div>
+            <div class="label">退出房间</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="share-bar">
+        <button class="btn outline">📤 分享战绩图</button>
+        <button class="btn primary">确认结算</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
