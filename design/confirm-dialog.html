@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>解散房间确认弹窗</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .dim-bg {
+    flex: 1;
+    background: var(--bg-2);
+    padding: 16px;
+    opacity: 0.3; filter: blur(2px);
+  }
+
+  /* 居中确认弹窗 */
+  .mask {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dialog {
+    width: 280px;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 24px 20px 16px;
+    box-shadow: var(--shadow-pop);
+    text-align: center;
+  }
+  .dialog .ico {
+    width: 48px; height: 48px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: var(--lose-soft);
+    color: var(--lose-text);
+    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dialog .title {
+    font-size: 17px; font-weight: 600;
+    color: var(--text-1);
+  }
+  .dialog .desc {
+    font-size: 13px; color: var(--text-2);
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .dialog .btns {
+    display: flex; gap: 12px;
+    margin-top: 20px;
+  }
+  .dialog .btns .btn { flex: 1; margin: 0; }
+  .btn.danger-solid {
+    background: var(--lose-text);
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <span>📶</span>
+        <span class="battery"><i></i></span>
+      </div>
+    </div>
+    <div class="nav-bar">
+      <div class="back">‹</div>
+      <div class="title">房间 mucj</div>
+      <div class="action">⋯</div>
+    </div>
+
+    <div class="screen no-tabbar" style="position:relative">
+      <!-- 背景虚化的房间页 -->
+      <div class="dim-bg"></div>
+
+      <!-- 居中确认弹窗 -->
+      <div class="mask">
+        <div class="dialog">
+          <div class="ico">⚠</div>
+          <div class="title">解散房间</div>
+          <div class="desc">你是房主，退出将解散房间，<br>所有成员将被清出。</div>
+          <div class="btns">
+            <button class="btn outline">取消</button>
+            <button class="btn danger-solid">解散房间</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
