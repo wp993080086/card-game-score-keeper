@@ -46,8 +46,8 @@ page {
 	--border: #f0f1f4;
 	--divider: #f0f0f5;
 
-	/* 阴影与圆角 */
-	--shadow-card: 0 4rpx 16rpx rgba(31, 35, 41, 0.04);
+	/* 阴影与圆角（白底页面配白卡，阴影需 0.08 起才可辨识） */
+	--shadow-card: 0 4rpx 16rpx rgba(31, 35, 41, 0.08);
 	--shadow-pop: 0 16rpx 48rpx rgba(31, 35, 41, 0.08);
 	--radius-sm: 16rpx;
 	--radius-md: 24rpx;
