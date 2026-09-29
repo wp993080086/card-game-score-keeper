@@ -1,0 +1,167 @@
+/* 战绩页 —— 对齐 design/records.html 与 design/empty-records.html */
+
+.records-page {
+	padding: 16rpx 0 32rpx;
+}
+
+/* 通用按钮 */
+.btn {
+	@include flex_center;
+	height: 96rpx;
+	border-radius: var(--radius-md);
+	font-size: 32rpx;
+	font-weight: 600;
+	gap: 12rpx;
+	line-height: 96rpx;
+}
+.btn::after {
+	border: none;
+}
+.btn.primary {
+	background: var(--primary);
+	color: #ffffff;
+}
+
+/* 输赢文字色 */
+.text-win {
+	color: var(--win);
+	font-weight: 600;
+}
+.text-lose {
+	color: var(--lose);
+	font-weight: 600;
+}
+
+/* 累计统计 */
+.summary {
+	margin: 0 32rpx;
+	padding: 32rpx;
+	background: linear-gradient(135deg, #edf2fc 0%, #f5f8ff 100%);
+	border-radius: var(--radius-lg);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	box-shadow: var(--shadow-card);
+}
+.summary .stat {
+	text-align: center;
+	flex: 1;
+}
+.summary .stat .num {
+	font-size: 44rpx;
+	font-weight: 700;
+	color: var(--text-1);
+}
+.summary .stat.win .num {
+	color: var(--win);
+}
+.summary .stat.lose .num {
+	color: var(--lose);
+}
+.summary .stat .label {
+	font-size: 24rpx;
+	color: var(--text-2);
+	margin-top: 8rpx;
+}
+.summary .divider {
+	width: 2rpx;
+	height: 64rpx;
+	background: #d6e0f5;
+}
+
+/* 归档分组标题 */
+.group-title {
+	font-size: 24rpx;
+	color: var(--text-3);
+	margin: 0 32rpx;
+	padding: 32rpx 0 16rpx;
+	font-weight: 500;
+}
+
+/* 牌局列表 */
+.record-list {
+	margin: 0 32rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-card);
+	overflow: hidden;
+}
+.record-item {
+	display: flex;
+	align-items: center;
+	gap: 24rpx;
+	padding: 28rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
+}
+.record-item:last-child {
+	border-bottom: none;
+}
+.record-item .meta {
+	flex: 1;
+}
+.record-item .room {
+	font-size: 30rpx;
+	font-weight: 500;
+	color: var(--text-1);
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+}
+.record-item .room .code {
+	font-family: monospace;
+	font-size: 26rpx;
+	color: var(--text-2);
+	background: var(--bg-2);
+	padding: 2rpx 12rpx;
+	border-radius: 8rpx;
+}
+.record-item .sub {
+	font-size: 24rpx;
+	color: var(--text-3);
+	margin-top: 4rpx;
+}
+.record-item .amount {
+	font-size: 32rpx;
+	font-weight: 700;
+}
+.record-item .arrow {
+	color: var(--text-4);
+	font-size: 32rpx;
+}
+
+/* 空状态 */
+.empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 160rpx 64rpx 0;
+	text-align: center;
+}
+.empty .illus {
+	width: 192rpx;
+	height: 192rpx;
+	border-radius: 50%;
+	background: var(--primary-soft);
+	@include flex_center;
+	font-size: 88rpx;
+	margin-bottom: 40rpx;
+}
+.empty .title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: var(--text-1);
+}
+.empty .desc {
+	font-size: 26rpx;
+	color: var(--text-3);
+	line-height: 1.6;
+	margin-top: 16rpx;
+}
+.empty .desc text {
+	display: block;
+}
+.empty .btn {
+	margin-top: 48rpx;
+	min-width: 320rpx;
+	padding: 0 48rpx;
+}

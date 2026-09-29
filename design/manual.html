@@ -54,20 +54,31 @@
   .guide-item .body .h { font-size: 14px; font-weight: 500; }
   .guide-item .body .d { font-size: 12px; color: var(--text-3); margin-top: 2px; }
 
-  .faq {
-    margin: 0 16px 16px;
-    background: var(--bg);
-    border-radius: 12px;
-    padding: 4px 0;
-    box-shadow: var(--shadow-card);
-  }
   .faq-item {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--divider);
+    padding: 8px 0;
   }
-  .faq-item:last-child { border-bottom: none; }
-  .faq-item .q { font-size: 14px; font-weight: 500; }
-  .faq-item .a { font-size: 13px; color: var(--text-2); margin-top: 4px; line-height: 1.5; }
+  .faq-item .row {
+    display: flex; gap: 12px;
+    align-items: flex-start;
+  }
+  .faq-item .row + .row { margin-top: 4px; }
+  .faq-item .badge {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .faq-item .badge.q {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+  .faq-item .badge.a {
+    background: var(--bg-2);
+    color: var(--text-2);
+  }
+  .faq-item .q-text { font-size: 14px; font-weight: 500; color: var(--text-1); line-height: 22px; }
+  .faq-item .a-text { font-size: 13px; color: var(--text-3); line-height: 22px; }
 </style>
 </head>
 <body>
@@ -142,19 +153,35 @@
             <span class="ico" style="background:#f3e8ff;color:#7c4dff">?</span>
             <span>常见问题</span>
           </div>
-        </div>
-        <div class="faq">
           <div class="faq-item">
-            <div class="q">平台会收取费用吗？</div>
-            <div class="a">完全免费，无任何抽成。</div>
+            <div class="row">
+              <div class="badge q">Q</div>
+              <div class="q-text">平台会收取费用吗？</div>
+            </div>
+            <div class="row">
+              <div class="badge a">A</div>
+              <div class="a-text">完全免费，无任何抽成。</div>
+            </div>
           </div>
           <div class="faq-item">
-            <div class="q">积分能换成钱吗？</div>
-            <div class="a">本平台只做记账工具，转账由好友间自行完成。</div>
+            <div class="row">
+              <div class="badge q">Q</div>
+              <div class="q-text">积分能换成钱吗？</div>
+            </div>
+            <div class="row">
+              <div class="badge a">A</div>
+              <div class="a-text">本平台只做记账工具，转账由好友间自行完成。</div>
+            </div>
           </div>
           <div class="faq-item">
-            <div class="q">房间人数能扩容吗？</div>
-            <div class="a">房主可看广告将上限提升至 6 人或 8 人。</div>
+            <div class="row">
+              <div class="badge q">Q</div>
+              <div class="q-text">房间人数能扩容吗？</div>
+            </div>
+            <div class="row">
+              <div class="badge a">A</div>
+              <div class="a-text">房主可看广告将上限提升至 6 人或 8 人。</div>
+            </div>
           </div>
         </div>
 

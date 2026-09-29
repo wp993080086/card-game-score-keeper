@@ -1,297 +1,162 @@
 <template>
 	<view class="settlement-page">
-		<!-- 导航栏 -->
-		<view class="nav-bar">
-			<view class="nav-left"></view>
-			<text class="nav-title">结算</text>
-			<view class="nav-right"></view>
+		<view class="screen-pad">
+			<!-- MVP 区：头像 + 右上角皇冠角标 + 收益 -->
+			<view class="mvp">
+				<view class="avatar-wrap">
+					<view class="g-avatar lg win-avatar">张</view>
+				</view>
+				<view class="earnings">
+					<text class="label">MVP 收益</text>
+					<text class="amount">+200 分</text>
+				</view>
+			</view>
+
+			<!-- 结算方案 -->
+			<view class="section-title">结算方案</view>
+			<view class="plans">
+				<view v-for="plan in planList" :key="`${plan.from}-${plan.to}`" class="plan-item">
+					<view class="g-avatar xs" :style="avatarStyle(plan.fromAvatar)">{{ plan.from.charAt(0) }}</view>
+					<view class="from">{{ plan.from }}</view>
+					<view class="arrow">→</view>
+					<view class="to">{{ plan.to }}</view>
+					<view class="amount">{{ plan.amount }} 分</view>
+				</view>
+			</view>
+
+			<!-- 功能区 -->
+			<view class="section-title">更多</view>
+			<view class="grid-2">
+				<view class="action-card" @click="_openRanking">
+					<view class="ico-wrap" style="background: #fff3e8">🏆</view>
+					<view class="label">排行榜</view>
+				</view>
+				<view class="action-card" @click="_openRecords">
+					<view class="ico-wrap" style="background: #e8f5e9">📋</view>
+					<view class="label">流水明细</view>
+				</view>
+				<view class="action-card" @click="_openManual">
+					<view class="ico-wrap" style="background: #e3f2fd">📖</view>
+					<view class="label">使用手册</view>
+				</view>
+				<view class="action-card danger" @click="_openDissolve">
+					<view class="ico-wrap" style="background: #fff1ed; color: #f76565">✕</view>
+					<view class="label">退出房间</view>
+				</view>
+			</view>
 		</view>
 
-		<!-- MVP 区域 -->
-		<view class="mvp-section">
-			<view class="mvp-avatar-wrapper">
-				<view class="mvp-crown">
-					<uni-icons type="star" size="20" color="#FFD700"></uni-icons>
-				</view>
-				<view class="mvp-avatar">
-					<text class="mvp-avatar-text">张</text>
-				</view>
-				<view class="mvp-badge">MVP</view>
-			</view>
-			<text class="mvp-name">张三</text>
-			<view class="mvp-earnings">
-				<text class="earnings-label">收益</text>
-				<text class="earnings-amount">+¥888</text>
-			</view>
+		<!-- 底部操作栏 -->
+		<view class="share-bar">
+			<button class="btn outline" @click="_shareResult">📤 分享战绩图</button>
+			<button class="btn primary" @click="_confirmSettle">确认结算</button>
 		</view>
 
-		<!-- 结算方案 -->
-		<view class="settlement-plans">
-			<view v-for="(plan, index) in plans" :key="index" class="plan-item">
-				<text class="plan-from">{{ plan.from }}</text>
-				<text class="plan-arrow">→</text>
-				<text class="plan-to">{{ plan.to }}</text>
-				<text class="plan-amount">¥{{ plan.amount }}</text>
-			</view>
-		</view>
-
-		<!-- 功能区 -->
-		<view class="action-grid">
-			<view class="action-btn" @click="handleRanking">
-				<view class="action-icon" style="background: #fff3e8">
-					<uni-icons type="bars" size="24" color="#ff7a45"></uni-icons>
+		<!-- 解散房间确认弹窗：对齐 design/confirm-dialog.html（房主点退出） -->
+		<view v-if="showDissolve" class="mask" @click="_closeDissolve">
+			<view class="confirm-dialog" @click.stop>
+				<view class="ico">⚠</view>
+				<view class="title">解散房间</view>
+				<view class="desc">
+					<text>你是房主，退出将解散房间，</text>
+					<text>所有成员将被清出。</text>
 				</view>
-				<text class="action-label">排行榜</text>
-			</view>
-			<view class="action-btn" @click="handleTransactions">
-				<view class="action-icon" style="background: #e8f5e9">
-					<uni-icons type="list" size="24" color="#4caf50"></uni-icons>
+				<view class="dialog-btns">
+					<button class="btn outline" @click="_closeDissolve">取消</button>
+					<button class="btn danger-solid" @click="_confirmDissolve">解散房间</button>
 				</view>
-				<text class="action-label">流水明细</text>
-			</view>
-			<view class="action-btn" @click="handleManual">
-				<view class="action-icon" style="background: #e3f2fd">
-					<uni-icons type="help" size="24" color="#2196f3"></uni-icons>
-				</view>
-				<text class="action-label">使用手册</text>
-			</view>
-			<view class="action-btn" @click="handleExitRoom">
-				<view class="action-icon" style="background: #fce4ec">
-					<uni-icons type="close" size="24" color="#f44336"></uni-icons>
-				</view>
-				<text class="action-label" style="color: #f44336">退出房间</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="ts">
-interface Plan {
+import { ref } from 'vue'
+
+defineOptions({
+	name: 'Settlement'
+})
+
+/** @description 头像配色（背景 + 文字色）*/
+interface I_Avatar {
+	bg: string
+	color: string
+}
+
+/** @description 最少转账方案条目*/
+interface I_PlanItem {
 	from: string
 	to: string
 	amount: number
+	fromAvatar: I_Avatar
 }
 
-const plans: Plan[] = [
-	{ from: '张三', to: '李四', amount: 200 },
-	{ from: '张三', to: '王五', amount: 150 },
-	{ from: '王五', to: '李四', amount: 100 }
-]
-
-const handleRanking = () => {
-	uni.showToast({ title: '排行榜功能即将上线', icon: 'none' })
+/** @description 头像配色方案（对齐设计稿 mock）*/
+const AVATAR_PRESET: TDict<I_Avatar> = {
+	default: { bg: 'var(--primary-soft)', color: 'var(--primary-text)' },
+	win: { bg: 'var(--win-soft)', color: 'var(--win-text)' },
+	lose: { bg: 'var(--lose-soft)', color: 'var(--lose-text)' },
+	green: { bg: '#e8f7ee', color: '#34a35b' }
 }
 
-const handleTransactions = () => {
-	uni.showToast({ title: '流水明细功能即将上线', icon: 'none' })
+/** @description 拼接头像内联样式*/
+const avatarStyle = (avatar: I_Avatar): string => {
+	return `background:${avatar.bg};color:${avatar.color}`
 }
 
-const handleManual = () => {
+/** @description 最少转账方案（mock，云开发接入后由 settle 云函数贪心计算）*/
+const planList = ref<I_PlanItem[]>([
+	{ from: '王五', to: '张三', amount: 90, fromAvatar: AVATAR_PRESET.green },
+	{ from: '法外狂徒', to: '张三', amount: 60, fromAvatar: AVATAR_PRESET.default },
+	{ from: '李四', to: '张三', amount: 50, fromAvatar: AVATAR_PRESET.lose }
+])
+
+/** @description 解散确认弹窗显隐*/
+const showDissolve = ref(false)
+
+/** @description 打开排行榜*/
+const _openRanking = () => {
+	uni.showToast({ title: '即将上线', icon: 'none' })
+}
+
+/** @description 打开流水明细*/
+const _openRecords = () => {
+	uni.showToast({ title: '即将上线', icon: 'none' })
+}
+
+/** @description 打开使用手册*/
+const _openManual = () => {
 	uni.navigateTo({ url: '/pages/manual/index' })
 }
 
-const handleExitRoom = () => {
-	uni.showModal({
-		title: '提示',
-		content: '确定退出房间吗？',
-		success: (res) => {
-			if (res.confirm) {
-				uni.showToast({ title: '已退出房间', icon: 'success' })
-			}
-		}
-	})
+/** @description 分享战绩图（canvas 绘制待云开发接入后实现）*/
+const _shareResult = () => {
+	uni.showToast({ title: '即将上线', icon: 'none' })
+}
+
+/** @description 确认结算：写入结算快照后跳转对局详情（云开发接入后调 settle 云函数）*/
+const _confirmSettle = () => {
+	uni.navigateTo({ url: '/pages/room-detail/index?roomCode=mucj' })
+}
+
+/** @description 打开解散确认弹窗（房主点退出）*/
+const _openDissolve = () => {
+	showDissolve.value = true
+}
+
+/** @description 关闭解散确认弹窗*/
+const _closeDissolve = () => {
+	showDissolve.value = false
+}
+
+/** @description 确认解散：全员清出并回首页（云开发接入后置 status=dissolved）*/
+const _confirmDissolve = () => {
+	showDissolve.value = false
+	uni.showToast({ title: '房间已解散', icon: 'none' })
+	setTimeout(() => {
+		uni.switchTab({ url: '/pages/home/index' })
+	}, 600)
 }
 </script>
 
-<style lang="scss" scoped>
-.settlement-page {
-	min-height: 100vh;
-	background-color: #f8fafb;
-	padding-bottom: env(safe-area-inset-bottom);
-}
-
-// 导航栏
-.nav-bar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	height: 44px;
-	padding: 0 16px;
-	background: #fff;
-	padding-top: env(safe-area-inset-top);
-	height: calc(44px + env(safe-area-inset-top));
-
-	.nav-left {
-		width: 80px;
-	}
-
-	.nav-title {
-		font-size: 18px;
-		font-weight: 600;
-		color: #1a1a1a;
-	}
-
-	.nav-right {
-		width: 80px;
-	}
-}
-
-// MVP 区域
-.mvp-section {
-	background: linear-gradient(135deg, #fff8e1, #fff3e0);
-	margin: 12px 16px;
-	border-radius: 16px;
-	padding: 24px 20px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 8px;
-
-	.mvp-avatar-wrapper {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-
-		.mvp-crown {
-			position: absolute;
-			top: -14px;
-			z-index: 1;
-		}
-
-		.mvp-avatar {
-			width: 72px;
-			height: 72px;
-			border-radius: 36px;
-			border: 3px solid #ffd700;
-			background: #ffcc02;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-
-			.mvp-avatar-text {
-				font-size: 28px;
-				font-weight: 700;
-				color: #fff;
-			}
-		}
-
-		.mvp-badge {
-			position: absolute;
-			bottom: -8px;
-			background: #ff5722;
-			color: #fff;
-			font-size: 11px;
-			font-weight: 600;
-			padding: 2px 8px;
-			border-radius: 8px;
-		}
-	}
-
-	.mvp-name {
-		font-size: 16px;
-		font-weight: 600;
-		color: #333;
-		margin-top: 4px;
-	}
-
-	.mvp-earnings {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-
-		.earnings-label {
-			font-size: 14px;
-			color: #666;
-		}
-
-		.earnings-amount {
-			font-size: 20px;
-			font-weight: 700;
-			color: #4caf50;
-		}
-	}
-}
-
-// 结算方案
-.settlement-plans {
-	background: #fff;
-	margin: 0 16px;
-	border-radius: 12px;
-	padding: 4px 0;
-
-	.plan-item {
-		display: flex;
-		align-items: center;
-		padding: 14px 20px;
-		border-bottom: 1px solid #f5f5f5;
-		gap: 8px;
-
-		&:last-child {
-			border-bottom: none;
-		}
-
-		.plan-from {
-			font-size: 15px;
-			font-weight: 500;
-			color: #333;
-		}
-
-		.plan-arrow {
-			font-size: 16px;
-			color: #999;
-		}
-
-		.plan-to {
-			font-size: 15px;
-			font-weight: 500;
-			color: #333;
-		}
-
-		.plan-amount {
-			margin-left: auto;
-			font-size: 16px;
-			font-weight: 600;
-			color: #f44336;
-		}
-	}
-}
-
-// 功能区
-.action-grid {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 12px;
-	padding: 0 16px;
-	margin-top: 16px;
-
-	.action-btn {
-		background: #fff;
-		border-radius: 12px;
-		padding: 20px 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 8px;
-
-		&:active {
-			opacity: 0.7;
-		}
-
-		.action-icon {
-			width: 48px;
-			height: 48px;
-			border-radius: 12px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
-		.action-label {
-			font-size: 14px;
-			font-weight: 500;
-			color: #333;
-		}
-	}
-}
-</style>
+<style lang="scss" scoped src="./style.scss"></style>

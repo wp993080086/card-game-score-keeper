@@ -9,6 +9,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.playwright-cli
 
 # 编辑器目录和文件
 .history

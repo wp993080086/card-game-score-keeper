@@ -1,240 +1,472 @@
+/* 房间页 —— 对齐 design/room.html 及配套弹窗（qr-popup / transfer-input / quick-phrases） */
+
 .room-page {
+	display: flex;
+	flex-direction: column;
 	width: 100%;
 	height: 100%;
-	background-color: #f5f5f5;
-	// 顶部公告
-	.notification-wrapper {
-		@include flex_center;
-		justify-content: start;
-		width: 100%;
-		height: 36px;
-		background-color: #fff8f0;
-		color: #ff7a45;
-		font-size: 14px;
-		font-weight: 500;
-		padding: 0px 16px;
-	}
-	// 顶部头像
-	.avatar-wrapper {
-		width: 100%;
-		height: 108px;
-		background-color: #ffffff;
-		padding: 0px 16px;
-		white-space: nowrap;
-		.item {
-			display: inline-block;
-			width: 80px;
-			height: 100%;
-			padding-top: 12px;
-			.avatar {
-				width: 56px;
-				height: 56px;
-				margin: 0px auto;
-				border-radius: 50%;
-				overflow: hidden;
-				cursor: pointer;
-				image {
-					width: 100%;
-					height: 100%;
-				}
-			}
-			.nickname {
-				@include flex_center;
-				width: 100%;
-				padding-top: 8px;
-				.text {
-					font-size: 12px;
-					font-weight: 500;
-					color: #000000;
-					text-wrap: wrap;
-				}
-			}
-		}
-		.user {
-			.avatar {
-				background-color: #f9f9f9;
-			}
-		}
-		.invite {
-			.avatar {
-				@include flex_center;
-				border: 2px dashed #d9d9d9;
-				font-size: 36px;
-				font-weight: 500;
-				color: #d9d9d9;
-			}
-		}
-	}
-	// 消息列表
-	.message-wrapper {
-		width: 100%;
-		height: calc(100% - 108px - 36px);
-		.message-list {
-			@include flex_center;
-			justify-content: start;
-			flex-direction: column;
-			gap: 16px;
-			width: 100%;
-			padding: 16px 16px;
-			.system,
-			.payment,
-			.warning {
-				@include flex_center;
-				width: auto;
-				height: 20px;
-				padding: 0px 16px;
-
-				border-radius: 10px;
-				.text {
-					font-size: 12px;
-					font-weight: 500;
-					color: #ffffff;
-				}
-			}
-			.system {
-				background-color: #9e9e9e;
-			}
-			.payment {
-				background-color: #67c23a;
-			}
-			.warning {
-				background-color: #e6a23c;
-			}
-			.message-item {
-				@include flex_center;
-				width: 100%;
-				min-height: 40px;
-				.avatar {
-					width: 40px;
-					height: 40px;
-					border-radius: 50%;
-					overflow: hidden;
-					background-color: #d9d9d9;
-					border: 1px solid #ffffff;
-					image {
-						width: 100%;
-						height: 100%;
-					}
-				}
-				.content {
-					font-size: 14px;
-					font-weight: 500;
-					line-height: 40px;
-					padding: 0px 16px;
-				}
-			}
-			.self {
-				justify-content: end;
-				.content {
-					border-radius: 16px 0px 16px 16px;
-					background-color: #ff7a45;
-					color: #ffffff;
-				}
-			}
-			.other {
-				justify-content: start;
-				.content {
-					border-radius: 0px 16px 16px 16px;
-					background-color: #ffffff;
-					border: 1px solid #f0f0f0;
-					margin-left: 8px;
-				}
-			}
-		}
-	}
+	background: var(--bg);
 }
 
-// 弹窗
-.popup-wrapper {
+/* 通用按钮 */
+.btn {
+	@include flex_center;
+	height: 96rpx;
+	border-radius: var(--radius-md);
+	font-size: 32rpx;
+	font-weight: 600;
+	gap: 12rpx;
+	line-height: 96rpx;
+}
+.btn::after {
+	border: none;
+}
+.btn.primary {
+	background: var(--primary);
+	color: #ffffff;
+}
+.btn.outline {
+	background: transparent;
+	color: var(--primary);
+	border: 2rpx solid var(--primary);
+}
+.btn.ghost {
+	background: var(--bg-2);
+	color: var(--text-1);
+}
+.btn.block {
+	width: 100%;
+}
+
+/* 公告条 */
+.notice {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	margin: 24rpx 32rpx;
+	padding: 12rpx 0 12rpx 24rpx;
+	background: var(--bg-2);
+	border-radius: 20rpx;
+	font-size: 24rpx;
+	color: var(--text-2);
+}
+.notice .ico {
+	font-size: 28rpx;
+}
+
+/* 成员条 */
+.members-bar {
+	display: flex;
+	align-items: center;
+	gap: 24rpx;
+	padding: 24rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
+}
+.members-bar .m-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12rpx;
+	flex-shrink: 0;
+}
+.members-bar .m-item .name {
+	font-size: 22rpx;
+	color: var(--text-2);
+	max-width: 112rpx;
+	text-align: center;
+	@include omit;
+}
+/* 邀请占位：虚线框 */
+.members-bar .m-item .invite {
+	background: transparent;
+	border: 4rpx dashed #c9d6f0;
+	color: var(--primary);
+	font-size: 44rpx;
+	font-weight: 300;
+}
+/* 房主角标：头像右下角小圆徽章（::after 定位在盒子外，需放开 .g-avatar 的 overflow 裁剪） */
+.members-bar .m-item.owner .g-avatar {
 	position: relative;
-	width: 321px;
-	height: 432px;
-	background-color: #ffffff;
-	border-radius: 16px;
-	padding: 24px 20px 0px;
-	// 关闭按钮
-	.close-btn {
-		position: absolute;
-		top: 12px;
-		right: 12px;
-		width: 32px;
-		height: 32px;
-		background-color: #f5f5f5;
-		border-radius: 50%;
-		@include flex_center;
-		font-size: 18px;
-		color: #999999;
-	}
-	// 标题区域
-	.title-area {
-		@include flex_center;
-		flex-direction: column;
-		gap: 8px;
-		width: 100%;
-		.desc {
-			font-size: 14px;
-			color: #666666;
-		}
-		.room-id {
-			@include flex_center;
-			gap: 8px;
-			.label {
-				font-size: 20px;
-				font-weight: 600;
-				color: #1a1a1a;
-			}
-			.value {
-				font-size: 20px;
-				font-weight: 700;
-				color: #1a1a1a;
-			}
-		}
-		.hint {
-			font-size: 12px;
-			color: #999999;
-		}
-	}
-	// 二维码区域
-	.qr-area {
-		@include flex_center;
-		width: 200px;
-		height: 200px;
-		margin: 16px auto 0px;
-		.qr-border {
-			width: 180px;
-			height: 180px;
-			border-radius: 8px;
-			border: 2px solid #eeeeee;
-			@include flex_center;
-			.qr-placeholder {
-				width: 160px;
-				height: 160px;
-				background-color: #cccccc;
-			}
-		}
-	}
-	// 提示文字
-	.tip-text {
-		@include flex_center;
-		gap: 4px;
-		margin-top: 12px;
-		font-size: 12px;
-		color: #999999;
-		.highlight {
-			color: #ff7a45;
-			font-weight: 500;
-		}
-	}
-	// 转发按钮
-	.share-btn {
-		width: 280px;
-		height: 48px;
-		background-color: #ff7a45;
-		border-radius: 24px;
-		@include flex_center;
-		margin: 16px auto 0;
-		font-size: 16px;
-		font-weight: 600;
-		color: #ffffff;
-	}
+	overflow: visible;
+}
+.members-bar .m-item.owner .g-avatar::after {
+	content: '房';
+	position: absolute;
+	right: -6rpx;
+	bottom: -6rpx;
+	width: 36rpx;
+	height: 36rpx;
+	background: var(--primary);
+	border: 4rpx solid #ffffff;
+	border-radius: 50%;
+	box-sizing: border-box;
+	color: #ffffff;
+	font-size: 20rpx;
+	font-weight: 600;
+	line-height: 1;
+	@include flex_center;
+}
+
+/* 点击提示 */
+.tap-hint {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	padding: 0 32rpx;
+	height: 54rpx;
+	font-size: 22rpx;
+	color: var(--text-3);
+	line-height: 1.4;
+}
+.tap-hint .ico {
+	color: var(--primary);
+}
+
+/* 消息流 */
+.messages {
+	flex: 1;
+	height: 0;
+	padding: 32rpx;
+	box-sizing: border-box;
+	background: var(--bg-2);
+}
+.msg-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 24rpx;
+}
+.msg-wrap > view {
+	margin-top: 24rpx;
+}
+
+/* 系统/转账动态居中胶囊 */
+.msg.system {
+	align-self: center;
+	max-width: 80%;
+	background: rgba(0, 0, 0, 0.04);
+	color: var(--text-3);
+	font-size: 24rpx;
+	padding: 8rpx 20rpx;
+	border-radius: 20rpx;
+}
+.msg.system.pay {
+	background: var(--bg);
+	color: var(--text-2);
+	padding: 12rpx 24rpx;
+}
+.msg.system.pay .arrow {
+	color: var(--text-4);
+	margin: 0 8rpx;
+}
+.msg.system.pay .amount {
+	color: var(--primary);
+	font-weight: 600;
+}
+
+/* 聊天气泡行 */
+.msg-row {
+	display: flex;
+	gap: 16rpx;
+	align-items: center;
+}
+.msg-row.self {
+	flex-direction: row-reverse;
+}
+.msg-row .bubble {
+	background: var(--bg);
+	padding: 20rpx 28rpx;
+	border-radius: var(--radius-md);
+	font-size: 28rpx;
+	line-height: 1.4;
+	max-width: 480rpx;
+	box-shadow: 2rpx 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+.msg-row.self .bubble {
+	background: var(--primary);
+	color: #ffffff;
+}
+
+/* 底部操作栏 */
+.actions-bar {
+	background: var(--bg);
+	border-top: 2rpx solid var(--divider);
+	padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+}
+
+/* 遮罩（常驻渲染 + .show 切换：opacity 淡入淡出，visibility 保证隐藏时不可交互） */
+.mask {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	@include flex_center;
+	z-index: 100;
+	opacity: 0;
+	visibility: hidden;
+	transition:
+		opacity 0.24s ease,
+		visibility 0.24s ease;
+}
+.mask.show {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* 房间二维码弹窗：居中缩放进出场 */
+.popup {
+	width: 560rpx;
+	background: var(--bg);
+	border-radius: var(--radius-lg);
+	padding: 40rpx;
+	box-shadow: var(--shadow-pop);
+	position: relative;
+	transform: scale(0.85);
+	transition: transform 0.24s ease;
+}
+.mask.show .popup {
+	transform: scale(1);
+}
+.popup .close {
+	position: absolute;
+	top: 24rpx;
+	right: 24rpx;
+	width: 48rpx;
+	height: 48rpx;
+	border-radius: 50%;
+	background: var(--bg-2);
+	@include flex_center;
+	font-size: 28rpx;
+	color: var(--text-3);
+}
+.popup .head {
+	text-align: center;
+	padding-top: 8rpx;
+}
+.popup .head .desc {
+	font-size: 24rpx;
+	color: var(--text-3);
+}
+.popup .head .room-row {
+	margin: 16rpx 0 8rpx;
+	@include flex_center;
+	gap: 12rpx;
+}
+.popup .head .label {
+	font-size: 24rpx;
+	color: var(--text-3);
+}
+.popup .head .code {
+	font-family: monospace;
+	font-size: 36rpx;
+	font-weight: 600;
+	color: var(--text-1);
+	letter-spacing: 4rpx;
+}
+.popup .head .copy {
+	font-size: 22rpx;
+	color: var(--primary);
+	padding: 4rpx 16rpx;
+	background: var(--primary-soft);
+	border-radius: 8rpx;
+}
+.popup .head .hint {
+	font-size: 24rpx;
+	color: var(--text-2);
+	margin-top: 12rpx;
+}
+/* 二维码占位：云开发接入后替换为真实小程序码图片 */
+.popup .qr-area {
+	margin: 32rpx auto;
+	width: 336rpx;
+	height: 336rpx;
+	border: 4rpx solid var(--primary);
+	border-radius: var(--radius-md);
+	padding: 20rpx;
+	background: #ffffff;
+	box-sizing: border-box;
+}
+.popup .qr-placeholder {
+	width: 100%;
+	height: 100%;
+	background: var(--bg-2);
+	border-radius: 8rpx;
+	@include flex_center;
+	font-size: 26rpx;
+	color: var(--text-3);
+}
+.popup .tip {
+	text-align: center;
+	font-size: 24rpx;
+	color: var(--text-2);
+	margin: 24rpx 0;
+}
+.popup .tip .hl {
+	color: var(--primary);
+	font-weight: 500;
+}
+.popup .share-btn {
+	margin-top: 24rpx;
+	height: 88rpx;
+	border-radius: 44rpx;
+	background: var(--primary);
+	color: #ffffff;
+	font-size: 30rpx;
+	font-weight: 600;
+	@include flex_center;
+	line-height: 88rpx;
+}
+.popup .share-btn::after {
+	border: none;
+}
+
+/* 支出 dialog：居中缩放进出场 */
+.dialog {
+	width: 100%;
+	background: var(--bg);
+	border-radius: var(--radius-lg);
+	padding: 48rpx 40rpx 40rpx;
+	box-shadow: var(--shadow-pop);
+	text-align: center;
+	margin: 0 64rpx;
+	transform: scale(0.9);
+	transition: transform 0.24s ease;
+}
+.mask.show .dialog {
+	transform: scale(1);
+}
+.dialog .title {
+	font-size: 36rpx;
+	font-weight: 600;
+	color: var(--text-1);
+}
+.dialog .subtitle {
+	margin-top: 16rpx;
+	font-size: 28rpx;
+	color: var(--text-2);
+}
+.dialog .subtitle .name {
+	color: var(--primary);
+	font-weight: 500;
+}
+.dialog .input-wrap {
+	margin-top: 40rpx;
+	display: flex;
+	align-items: center;
+	border: 2rpx solid var(--divider);
+	border-radius: var(--radius-md);
+	background: var(--bg);
+	height: 112rpx;
+	padding: 0 32rpx;
+}
+.dialog .amount-input {
+	flex: 1;
+	height: 100%;
+	font-size: 44rpx;
+	font-weight: 700;
+	color: var(--text-1);
+	text-align: center;
+}
+.dialog .suffix {
+	font-size: 32rpx;
+	color: var(--text-3);
+	font-weight: 500;
+	margin-left: 8rpx;
+}
+.dialog .dialog-btns {
+	margin-top: 48rpx;
+	display: flex;
+	gap: 24rpx;
+}
+.dialog .dialog-btns .btn {
+	flex: 1;
+	padding: 0;
+}
+
+/* 快捷语句底部抽屉（遮罩淡入淡出 + 面板从底部滑入滑出） */
+.sheet-mask {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	z-index: 100;
+	opacity: 0;
+	visibility: hidden;
+	transition:
+		opacity 0.24s ease,
+		visibility 0.24s ease;
+}
+.sheet-mask.show {
+	opacity: 1;
+	visibility: visible;
+}
+.sheet {
+	background: var(--bg);
+	border-radius: 32rpx 32rpx 0 0;
+	padding: 40rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+	box-shadow: var(--shadow-pop);
+	max-height: 70vh;
+	display: flex;
+	flex-direction: column;
+	transform: translateY(100%);
+	transition: transform 0.28s ease;
+}
+.sheet-mask.show .sheet {
+	transform: translateY(0);
+}
+.sheet .head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 32rpx;
+	flex-shrink: 0;
+}
+.sheet .head .title {
+	font-size: 32rpx;
+	font-weight: 600;
+}
+.sheet .head .close {
+	width: 56rpx;
+	height: 56rpx;
+	border-radius: 50%;
+	background: var(--bg-2);
+	@include flex_center;
+	font-size: 28rpx;
+	color: var(--text-3);
+}
+/* 语句滚动区：flex 占满剩余高度，头部固定不随滚动 */
+.phrase-list {
+	flex: 1;
+	min-height: 0;
+}
+/* 阻断滚动链：列表滚到底后不再把滚动传给下层页面 */
+.phrase-list :deep(.uni-scroll-view) {
+	overscroll-behavior: contain;
+}
+.phrase-item {
+	background: var(--bg-2);
+	border-radius: var(--radius-md);
+	padding: 26rpx 32rpx;
+	font-size: 28rpx;
+	color: var(--text-1);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.phrase-item + .phrase-item {
+	margin-top: 20rpx;
+}
+.phrase-item:active {
+	background: var(--primary-soft);
+	color: var(--primary-text);
+}
+.phrase-item .send {
+	font-size: 24rpx;
+	color: var(--text-4);
 }

@@ -1,111 +1,160 @@
+/* 首页 —— 对齐 design/home.html */
+
 .home-page {
+	padding: 16rpx 0 32rpx;
+}
+
+/* 通用按钮（对齐 design/common.css 的 .btn） */
+.btn {
+	@include flex_center;
+	height: 96rpx;
+	border-radius: var(--radius-md);
+	font-size: 32rpx;
+	font-weight: 600;
+	gap: 12rpx;
+	line-height: 96rpx;
+}
+.btn::after {
+	border: none;
+}
+.btn.primary {
+	background: var(--primary);
+	color: #ffffff;
+}
+.btn.outline {
+	background: transparent;
+	color: var(--primary);
+	border: 2rpx solid var(--primary);
+}
+
+/* 用户卡 */
+.user-card {
+	display: flex;
+	align-items: center;
+	gap: 24rpx;
+	margin: 0 32rpx;
+	padding: 32rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-card);
+}
+.user-card .info {
+	flex: 1;
+}
+.user-card .nick {
+	font-size: 34rpx;
+	font-weight: 600;
+	color: var(--text-1);
+}
+.user-card .sub {
+	font-size: 24rpx;
+	color: var(--text-3);
+	margin-top: 4rpx;
+}
+.user-card .edit {
+	font-size: 36rpx;
+	color: var(--text-3);
+	padding: 8rpx;
+}
+
+/* 进行中的牌局 */
+.ongoing {
+	margin: 32rpx 32rpx 0;
+	padding: 32rpx;
+	background: linear-gradient(135deg, #edf2fc 0%, #f5f8ff 100%);
+	border-radius: var(--radius-lg);
+	border: 2rpx solid #dde7fa;
+	box-shadow: var(--shadow-card);
+}
+.ongoing .label {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	font-size: 24rpx;
+	color: var(--primary-text);
+	font-weight: 500;
+}
+.ongoing .label .dot {
+	width: 12rpx;
+	height: 12rpx;
+	background: var(--primary);
+	border-radius: 50%;
+}
+.ongoing .room-id {
+	font-size: 44rpx;
+	font-weight: 700;
+	color: var(--text-1);
+	margin-top: 12rpx;
+	letter-spacing: 4rpx;
+}
+.ongoing .members {
+	display: flex;
+	align-items: center;
+	margin-top: 24rpx;
+}
+.ongoing .members .g-avatar {
+	margin-left: -16rpx;
+	border: 4rpx solid #ffffff;
+}
+.ongoing .members .g-avatar:first-child {
+	margin-left: 0;
+}
+.ongoing .cta {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	flex-direction: column;
+	margin-top: 24rpx;
+	padding-top: 24rpx;
+	border-top: 2rpx dashed #c9d6f0;
+	color: var(--primary);
+	font-size: 28rpx;
+	font-weight: 500;
+}
+.ongoing .cta .arr {
+	font-size: 36rpx;
+}
+
+/* 主要操作 */
+.actions {
+	display: flex;
+	gap: 24rpx;
+	margin: 40rpx 32rpx 0;
+}
+.actions .btn {
+	flex: 1;
+	padding: 0;
+}
+
+/* 快捷入口（与创建房间/扫码进房同尺寸的次级按钮） */
+.quick {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24rpx;
+	margin: 24rpx 32rpx 0;
+}
+.quick .item {
+	/* button 默认 margin auto + 宽度塌缩，需显式撑满 grid 单元格 */
 	width: 100%;
-	height: 100%;
-	padding-top: 16px;
-	padding-left: 16px;
-	padding-right: 16px;
-	.info-content {
-		width: 100%;
-		height: fit-content;
-		.user-section {
-			@include flex_center;
-			flex-direction: column;
-			gap: 8px;
-			width: 100%;
-			padding: 16px;
-			background-color: #ffffff;
-			border-radius: 12px;
-			// 阴影
-			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-			.avatar {
-				width: 80px;
-				height: 80px;
-				border-radius: 50%;
-				background-color: #f9f9f9;
-				overflow: hidden;
-				image {
-					width: 100%;
-					height: 100%;
-				}
-			}
-			.username {
-				text-align: center;
-				width: 100%;
-				font-size: 16px;
-				font-weight: 500;
-				color: #000000;
-			}
-			.summary {
-				@include flex_center;
-				flex-wrap: wrap;
-				width: 100%;
-				text-align: center;
-				.green {
-					font-size: 14px;
-					font-weight: 600;
-					color: #4caf50;
-				}
-				.warning {
-					font-size: 14px;
-					font-weight: 600;
-					color: #ff9800;
-				}
-				.text {
-					font-size: 14px;
-					font-weight: 600;
-					color: #666666;
-				}
-				.icon {
-					width: 13px;
-					height: 13px;
-				}
-			}
-		}
-		.button-section {
-			@include flex_center;
-			gap: 16px;
-			padding-top: 20px;
-			.button {
-				flex: 1;
-				@include flex_center;
-				height: 40px;
-				border-radius: 20px;
-				font-size: 16px;
-				font-weight: 600;
-			}
-			.full {
-				background-color: #ff7a45;
-				color: #ffffff;
-			}
-			.plain {
-				border: 1px solid #ff7a45;
-				color: #ff7a45;
-			}
-		}
-	}
-	.operate-content {
-		@include flex_center;
-		flex-wrap: wrap;
-		gap: 12px;
-		width: 100%;
-		height: fit-content;
-		margin-bottom: 36px;
-		.button {
-			@include flex_center;
-			height: 28px;
-			padding: 0px 16px;
-			border: 1px solid #c1c1c1;
-			border-radius: 14px;
-			font-size: 14px;
-			font-weight: 500;
-			color: #000000;
-			background-color: #ffffff;
-			margin-left: 0px;
-			margin-right: 0px;
-		}
-	}
+	@include flex_center;
+	gap: 12rpx;
+	height: 96rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-card);
+	font-size: 28rpx;
+	font-weight: 500;
+	color: var(--text-1);
+	padding: 0;
+}
+.quick .item::after {
+	border: none;
+}
+.quick .item .ico {
+	font-size: 36rpx;
+	line-height: 1;
+}
+.quick .item .label {
+	font-size: 28rpx;
+	color: var(--text-1);
+	font-weight: 500;
 }

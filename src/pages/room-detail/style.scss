@@ -1,0 +1,154 @@
+/* 对局详情页 —— 对齐 design/room-detail.html（不设 min-height:100vh：H5 端导航栏 fixed 占位 + 100vh 会多出整页滚动量） */
+.detail-page {
+	padding: 32rpx 0 48rpx;
+	background: var(--bg);
+	box-sizing: border-box;
+}
+
+/* 头部信息卡 */
+.head-info {
+	margin: 0 32rpx;
+	padding: 32rpx;
+	background: linear-gradient(135deg, #edf2fc 0%, #f5f8ff 100%);
+	border-radius: var(--radius-lg);
+	border: 2rpx solid #dde7fa;
+	box-shadow: var(--shadow-card);
+}
+.head-info .top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.head-info .code {
+	font-family: monospace;
+	font-size: 40rpx;
+	font-weight: 700;
+	letter-spacing: 4rpx;
+	color: var(--text-1);
+}
+.head-info .date {
+	font-size: 24rpx;
+	color: var(--text-3);
+	margin-top: 8rpx;
+}
+.head-info .my-net {
+	text-align: right;
+}
+.head-info .my-net .lbl {
+	font-size: 22rpx;
+	color: var(--text-3);
+}
+.head-info .my-net .val {
+	font-size: 44rpx;
+	font-weight: 700;
+	margin-top: 4rpx;
+}
+.head-info .my-net .val.win {
+	color: var(--win);
+}
+.head-info .my-net .val.lose {
+	color: var(--lose);
+}
+.head-info .summary-row {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	margin-top: 28rpx;
+	padding-top: 24rpx;
+	border-top: 2rpx dashed #c9d6f0;
+	font-size: 24rpx;
+	color: var(--text-2);
+}
+.head-info .summary-row .dot {
+	color: var(--text-4);
+}
+.head-info .summary-row .badge {
+	margin-left: auto;
+	background: var(--win-soft);
+	color: var(--win-text);
+	font-size: 22rpx;
+	font-weight: 500;
+	padding: 4rpx 16rpx;
+	border-radius: 999rpx;
+}
+
+/* 区块标题 */
+.section-title {
+	font-size: 28rpx;
+	font-weight: 600;
+	margin: 40rpx 32rpx 20rpx;
+}
+
+/* 结算方案 */
+.plans-card {
+	margin: 0 32rpx 32rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	padding: 8rpx 0;
+	box-shadow: var(--shadow-card);
+}
+.plan-item {
+	display: flex;
+	align-items: center;
+	padding: 24rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
+	font-size: 28rpx;
+	gap: 16rpx;
+}
+.plan-item:last-child {
+	border-bottom: none;
+}
+.plan-item .from,
+.plan-item .to {
+	font-weight: 500;
+	flex: 1;
+	@include omit;
+}
+.plan-item .to {
+	text-align: right;
+}
+.plan-item .arrow {
+	color: var(--text-4);
+}
+.plan-item .amount {
+	font-weight: 600;
+	color: var(--lose-text);
+	flex-shrink: 0;
+}
+
+/* 每人累计输赢 */
+.stats-card {
+	margin: 0 32rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	padding: 8rpx 0;
+	box-shadow: var(--shadow-card);
+}
+.stat-row {
+	display: flex;
+	align-items: center;
+	gap: 24rpx;
+	padding: 24rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
+}
+.stat-row:last-child {
+	border-bottom: none;
+}
+.stat-row .name {
+	font-size: 28rpx;
+	flex: 1;
+	font-weight: 500;
+	@include omit;
+}
+.stat-row .val {
+	min-width: 120rpx;
+	text-align: right;
+	font-size: 30rpx;
+	font-weight: 700;
+}
+.stat-row .val.win {
+	color: var(--win);
+}
+.stat-row .val.lose {
+	color: var(--lose);
+}

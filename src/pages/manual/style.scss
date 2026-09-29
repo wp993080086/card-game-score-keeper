@@ -1,0 +1,124 @@
+/* 使用手册页 —— 对齐 design/manual.html */
+
+.manual-page {
+	padding: 32rpx 0 48rpx;
+	background: var(--bg);
+	min-height: 100vh;
+	box-sizing: border-box;
+}
+
+/* 手册卡片 */
+.manual-card {
+	margin: 0 32rpx 32rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	padding: 32rpx;
+	box-shadow: var(--shadow-card);
+}
+.manual-card.first {
+	margin-top: 0;
+}
+.manual-card .title {
+	font-size: 30rpx;
+	font-weight: 600;
+	margin-bottom: 24rpx;
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+}
+.manual-card .title .ico {
+	width: 48rpx;
+	height: 48rpx;
+	border-radius: 12rpx;
+	@include flex_center;
+	font-size: 28rpx;
+}
+
+/* 快速入门步骤 */
+.step {
+	display: flex;
+	gap: 24rpx;
+	padding: 16rpx 0;
+}
+.step .num {
+	width: 44rpx;
+	height: 44rpx;
+	border-radius: 50%;
+	background: var(--primary-soft);
+	color: var(--primary);
+	font-size: 24rpx;
+	font-weight: 600;
+	@include flex_center;
+	flex-shrink: 0;
+}
+.step .text {
+	font-size: 28rpx;
+	color: var(--text-1);
+	line-height: 1.5;
+}
+
+/* 如何记账条目 */
+.guide-item {
+	display: flex;
+	gap: 24rpx;
+	padding: 20rpx 0;
+}
+.guide-item .ico {
+	width: 56rpx;
+	height: 56rpx;
+	border-radius: 16rpx;
+	background: var(--bg-2);
+	@include flex_center;
+	font-size: 28rpx;
+	flex-shrink: 0;
+}
+.guide-item .body .h {
+	font-size: 28rpx;
+	font-weight: 500;
+}
+.guide-item .body .d {
+	font-size: 24rpx;
+	color: var(--text-3);
+	margin-top: 4rpx;
+}
+
+/* 常见问题（与快速入门同布局：徽标 + 文本行） */
+.faq-item {
+	padding: 16rpx 0;
+}
+.faq-item .row {
+	display: flex;
+	gap: 24rpx;
+	align-items: flex-start;
+}
+.faq-item .row + .row {
+	margin-top: 8rpx;
+}
+.faq-item .badge {
+	width: 44rpx;
+	height: 44rpx;
+	border-radius: 50%;
+	font-size: 24rpx;
+	font-weight: 600;
+	@include flex_center;
+	flex-shrink: 0;
+}
+.faq-item .badge.q {
+	background: var(--primary-soft);
+	color: var(--primary);
+}
+.faq-item .badge.a {
+	background: var(--bg-2);
+	color: var(--text-2);
+}
+.faq-item .q-text {
+	font-size: 28rpx;
+	font-weight: 500;
+	color: var(--text-1);
+	line-height: 44rpx;
+}
+.faq-item .a-text {
+	font-size: 26rpx;
+	color: var(--text-3);
+	line-height: 44rpx;
+}
