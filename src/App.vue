@@ -2,6 +2,13 @@
 export default {
 	onLaunch: function () {
 		console.log('App Launch')
+		// #ifdef MP-WEIXIN
+		// 微信云开发初始化：环境 ID 与 AppID 同为公开标识符，直接写死（见 docs/cloud-dev-plan.md）
+		wx.cloud.init({
+			env: 'cloud1-d6gq6viqp5cb4dd85',
+			traceUser: true
+		})
+		// #endif
 	},
 	onShow: function () {
 		console.log('App Show')

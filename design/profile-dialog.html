@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=375, initial-scale=1" />
+		<title>完善资料弹窗</title>
+		<link rel="stylesheet" href="common.css" />
+		<style>
+			.dim-bg {
+				flex: 1;
+				background: var(--bg-2);
+				padding: 16px;
+				opacity: 0.3;
+				filter: blur(2px);
+			}
+
+			/* 居中表单弹窗（完善资料） */
+			.mask {
+				position: absolute;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.5);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.dialog {
+				width: 300px;
+				background: var(--bg);
+				border-radius: 16px;
+				padding: 24px 20px 20px;
+				box-shadow: var(--shadow-pop);
+				text-align: center;
+				position: relative;
+			}
+			/* 右上角关闭叉（放大 1.5 倍） */
+			.dialog .close {
+				position: absolute;
+				top: 12px;
+				right: 12px;
+				width: 36px;
+				height: 36px;
+				border-radius: 50%;
+				background: var(--bg-2);
+				color: var(--text-3);
+				font-size: 21px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+			}
+			.dialog .title {
+				font-size: 17px;
+				font-weight: 600;
+				color: var(--text-1);
+			}
+			.dialog .desc {
+				font-size: 13px;
+				color: var(--text-2);
+				line-height: 1.6;
+				margin-top: 8px;
+			}
+
+			/* 头像选择区 */
+			.avatar-picker {
+				width: 80px;
+				height: 80px;
+				margin: 20px auto 0;
+				position: relative;
+				cursor: pointer;
+				border: none;
+				background: none;
+				padding: 0;
+			}
+			.avatar-picker .ph {
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				background: var(--primary-soft);
+				color: var(--primary-text);
+				font-size: 30px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+			}
+			.avatar-picker .ph img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+			}
+			.avatar-picker .badge {
+				position: absolute;
+				right: 0;
+				bottom: 0;
+				width: 26px;
+				height: 26px;
+				border-radius: 50%;
+				background: var(--primary);
+				color: #fff;
+				font-size: 13px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border: 2px solid var(--bg);
+			}
+
+			/* 昵称输入 */
+			.field {
+				margin-top: 16px;
+				height: 48px;
+				background: var(--bg-2);
+				border-radius: 12px;
+				display: flex;
+				align-items: center;
+				padding: 0 14px;
+			}
+			.field input {
+				flex: 1;
+				border: none;
+				outline: none;
+				background: none;
+				font-size: 15px;
+				color: var(--text-1);
+				text-align: center;
+			}
+			.field input::placeholder {
+				color: var(--text-4);
+			}
+
+			/* 保存 */
+			.dialog .save {
+				width: 100%;
+				margin-top: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="phone">
+			<div class="phone-frame">
+				<div class="status-bar">
+					<span>9:41</span>
+					<div class="icons">
+						<span class="signal"><i></i><i></i><i></i><i></i></span>
+						<span>📶</span>
+						<span class="battery"><i></i></span>
+					</div>
+				</div>
+				<div class="nav-bar">
+					<div class="back">‹</div>
+					<div class="title">打牌好友记账</div>
+					<div class="action">⋯</div>
+				</div>
+
+				<div class="screen no-tabbar" style="position: relative">
+					<!-- 背景虚化的首页 -->
+					<div class="dim-bg"></div>
+
+					<!-- 居中完善资料弹窗 -->
+					<div class="mask">
+						<div class="dialog">
+							<div class="close">✕</div>
+							<div class="title">完善资料</div>
+							<div class="desc">头像与昵称将展示给房间内的其他成员</div>
+
+							<!-- 头像：点击选择（微信官方 chooseAvatar 能力） -->
+							<button class="avatar-picker">
+								<div class="ph">📷</div>
+								<div class="badge">✎</div>
+							</button>
+
+							<!-- 昵称：type=nickname，键盘可快捷填入微信昵称 -->
+							<div class="field">
+								<input type="text" placeholder="请输入昵称" maxlength="20" />
+							</div>
+
+							<button class="btn primary save">保存</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

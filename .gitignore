@@ -32,3 +32,6 @@ auto-imports.d.ts
 .workbuddy
 .cursor
 .trae
+
+# 云函数本地依赖（部署时云端自动安装）
+cloudfunctions/**/node_modules
