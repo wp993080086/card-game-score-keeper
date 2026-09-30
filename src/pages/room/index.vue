@@ -6,14 +6,18 @@
 			<text>本平台不涉及赌博和金钱，具体请查看使用手册</text>
 		</view>
 
-		<!-- 成员条 -->
+		<!-- 成员条：真实成员（room_members watch）+ 邀请占位；头像用 wrapper 承担圆形与房主角标（image 自身 100% 填充 + border-radius 双保险） -->
 		<view class="members-bar">
-			<view v-for="member in memberList" :key="member.name" class="m-item" :class="{ owner: member.isOwner }" @click="_onMemberTap(member)">
-				<view v-if="!member.isInvite" class="g-avatar" :style="avatarStyle(member.avatar)">
-					{{ member.name.charAt(0) }}
+			<view v-for="member in memberList" :key="member.openid" class="m-item" :class="{ owner: member.isOwner }" @click="_onMemberTap(member)">
+				<view class="g-avatar">
+					<image v-if="member.avatarUrl" class="avatar-img" :src="member.avatarUrl" mode="aspectFill" />
+					<view v-else :style="avatarStyle(hashColor(member.nickname))">{{ member.nickname.charAt(0) }}</view>
 				</view>
-				<view v-else class="g-avatar invite">+</view>
-				<view class="name">{{ member.isInvite ? '邀请' : member.name }}</view>
+				<view class="name">{{ member.nickname }}</view>
+			</view>
+			<view v-for="i in inviteSlots" :key="`invite-${i}`" class="m-item" @click="_openQr">
+				<view class="g-avatar invite">+</view>
+				<view class="name">邀请</view>
 			</view>
 		</view>
 
@@ -23,14 +27,14 @@
 			<text>点击其他成员头像，向他支付积分</text>
 		</view>
 
-		<!-- 消息流 -->
-		<scroll-view class="messages" scroll-y :scroll-into-view="scrollInto">
-			<view v-for="(msg, index) in messageList" :key="index" class="msg-wrap">
+		<!-- 消息流：watch 最近 50 条，滚到顶部加载更早 -->
+		<scroll-view class="messages" scroll-y :scroll-into-view="scrollInto" upper-threshold="50" @scrolltoupper="_loadOlder">
+			<view v-for="msg in messageList" :key="msg.id" class="msg-wrap">
 				<!-- 系统消息 -->
 				<view v-if="msg.type === 'system'" class="msg system">{{ msg.content }}</view>
 
 				<!-- 转账动态 -->
-				<view v-else-if="msg.type === 'pay'" class="msg system pay">
+				<view v-else-if="msg.type === 'payment'" class="msg system pay">
 					<text>{{ msg.sender }}</text>
 					<text class="arrow">→</text>
 					<text>{{ msg.payTo }}</text>
@@ -38,8 +42,9 @@
 				</view>
 
 				<!-- 聊天气泡 -->
-				<view v-else class="msg-row" :class="{ self: msg.isSelf }">
-					<view class="g-avatar sm" :style="avatarStyle(msg.avatar)">{{ msg.sender.charAt(0) }}</view>
+				<view v-else class="msg-row" :class="{ self: msg.senderOpenid === myOpenid }">
+					<image v-if="msg.avatarUrl" class="g-avatar sm" :src="msg.avatarUrl" mode="aspectFill" />
+					<view v-else class="g-avatar sm" :style="avatarStyle(hashColor(msg.sender))">{{ msg.sender.charAt(0) }}</view>
 					<view class="bubble">{{ msg.content }}</view>
 				</view>
 			</view>
@@ -66,8 +71,9 @@
 					<view class="hint">邀请好友扫描以下二维码加入</view>
 				</view>
 				<view class="qr-area">
-					<!-- 云开发接入后替换为 wxacode.getUnlimited 生成的真实小程序码 -->
-					<view class="qr-placeholder">二维码</view>
+					<!-- createRoom 生成的小程序码（rooms.qrFileID），空则显示占位 -->
+					<image v-if="roomInfo?.qrFileID" class="qr-img" :src="roomInfo.qrFileID" mode="aspectFit" />
+					<view v-else class="qr-placeholder">二维码</view>
 				</view>
 				<view class="tip">也可以 <text class="hl">转发</text> 给好友加入</view>
 				<button class="share-btn" open-type="share">📤 转发给好友</button>
@@ -80,7 +86,7 @@
 				<view class="title">支出</view>
 				<view class="subtitle">
 					<text>给 </text>
-					<text class="name">{{ transferTarget?.name }}</text>
+					<text class="name">{{ transferTarget?.nickname }}</text>
 				</view>
 				<view class="input-wrap">
 					<input v-model="transferAmount" class="amount-input" type="number" placeholder="请输入积分" @confirm="_confirmTransfer" />
@@ -88,7 +94,7 @@
 				</view>
 				<view class="dialog-btns">
 					<button class="btn ghost" @click="_cancelTransfer">取消</button>
-					<button class="btn primary" @click="_confirmTransfer">确定</button>
+					<button class="btn primary" :disabled="transferring" @click="_confirmTransfer">{{ transferring ? '转账中…' : '确定' }}</button>
 				</view>
 			</view>
 		</view>
@@ -115,8 +121,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
-import { onShareAppMessage } from '@dcloudio/uni-app'
+import { computed, nextTick, ref } from 'vue'
+import { onLoad, onShareAppMessage, onUnload } from '@dcloudio/uni-app'
+import { transfer } from '@/apis/room'
 
 defineOptions({
 	name: 'Room'
@@ -128,35 +135,37 @@ interface I_Avatar {
 	color: string
 }
 
-/** @description 房间成员*/
+/** @description 房间成员（room_members 活跃记录）*/
 interface I_Member {
-	name: string
-	avatar: I_Avatar
-	/** 是否房主 */
+	openid: string
+	nickname: string
+	/** 云存储 fileID，未设置头像时为空串 */
+	avatarUrl: string
 	isOwner: boolean
-	/** 是否邀请占位 */
-	isInvite: boolean
 }
 
-/** @description 消息类型：system=系统提示 / pay=转账动态 / chat=快捷语句聊天*/
-type T_MsgType = 'system' | 'pay' | 'chat'
+/** @description 消息类型：system=进房动态 / payment=转账动态 / chat=快捷语句气泡*/
+type T_MsgType = 'system' | 'payment' | 'chat'
 
-/** @description 房间内消息*/
+/** @description 消息流渲染模型（messages 文档映射后）*/
 interface I_Message {
+	/** 消息 _id（去重/渲染 key） */
+	id: string
 	type: T_MsgType
-	/** system/pay 为标题文案，chat 为气泡内容 */
+	/** system/chat 为文案 */
 	content: string
-	/** 发送者昵称（pay 为支出方） */
+	/** 昵称（payment 为支出方） */
 	sender: string
-	/** pay 的收入方 */
+	senderOpenid: string
+	/** payment 的收入方 */
 	payTo: string
-	/** pay 的积分额 */
+	/** payment 的积分额 */
 	amount: number
-	isSelf: boolean
-	avatar: I_Avatar
+	/** 支出方头像 fileID，未设置头像时为空串 */
+	avatarUrl: string
 }
 
-/** @description 头像配色方案（对齐设计稿 mock）*/
+/** @description 头像配色方案（无头像成员按昵称哈希取色）*/
 const AVATAR_PRESET: TDict<I_Avatar> = {
 	default: { bg: 'var(--primary-soft)', color: 'var(--primary-text)' },
 	win: { bg: 'var(--win-soft)', color: 'var(--win-text)' },
@@ -164,25 +173,63 @@ const AVATAR_PRESET: TDict<I_Avatar> = {
 	green: { bg: '#e8f7ee', color: '#34a35b' }
 }
 
+/** @description 配色轮转顺序*/
+const AVATAR_KEYS = ['default', 'win', 'lose', 'green']
+
 /** @description 拼接头像内联样式*/
 const avatarStyle = (avatar: I_Avatar): string => {
 	return `background:${avatar.bg};color:${avatar.color}`
 }
 
-/** @description 房号（mock，云开发接入后由 createRoom 生成）*/
-const roomCode = 'mucj'
+/** @description 无头像成员按昵称哈希取固定配色（同一人颜色稳定）*/
+const hashColor = (name: string): I_Avatar => {
+	const sum = [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+	return AVATAR_PRESET[AVATAR_KEYS[sum % AVATAR_KEYS.length]]
+}
 
-/** @description 当前用户昵称（mock，用于区分自己/他人气泡）*/
-const selfName = '法外狂徒'
+/** @description 房间 id 与房号（建房/进房跳转带入）*/
+const roomId = ref('')
+const roomCode = ref('')
 
-/** @description 成员列表（mock，上限 4 人 + 邀请占位）*/
-const memberList = ref<I_Member[]>([
-	{ name: selfName, avatar: AVATAR_PRESET.default, isOwner: true, isInvite: false },
-	{ name: '张三', avatar: AVATAR_PRESET.win, isOwner: false, isInvite: false },
-	{ name: '李四', avatar: AVATAR_PRESET.lose, isOwner: false, isInvite: false },
-	{ name: '王五', avatar: AVATAR_PRESET.green, isOwner: false, isInvite: false },
-	{ name: '邀请', avatar: AVATAR_PRESET.default, isOwner: false, isInvite: true }
-])
+/** @description 房间文档（ownerOpenid/maxMembers/qrFileID 等）*/
+const roomInfo = ref<TAny | null>(null)
+
+/** @description 当前用户 openid 与资料（users 集合「仅创建者可读写」权限下 get 即自己的记录）*/
+const myOpenid = ref('')
+const myProfile = ref<{ nickname: string; avatarUrl: string } | null>(null)
+
+/** @description 活跃成员原始文档（room_members watch 快照）*/
+const rawMembers = ref<TAny[]>([])
+
+/** @description 消息原始文档（messages watch 快照 + 分页历史，asc 排列）*/
+const rawMessages = ref<TAny[]>([])
+
+/** @description 成员渲染模型（isOwner 依赖 roomInfo，用 computed 解析取数时序）*/
+const memberList = computed<I_Member[]>(() =>
+	rawMembers.value.map((m) => ({
+		openid: m.openid || '',
+		nickname: m.nickname || '',
+		avatarUrl: m.avatarUrl || '',
+		isOwner: !!m.openid && m.openid === roomInfo.value?.ownerOpenid
+	}))
+)
+
+/** @description 邀请占位（产品约定：无论缺几人只显示 1 个加号；满员不显示）*/
+const inviteSlots = computed(() => ((roomInfo.value?.maxMembers ?? 4) > memberList.value.length ? 1 : 0))
+
+/** @description 消息渲染模型（文档 → 视图字段）*/
+const messageList = computed<I_Message[]>(() =>
+	rawMessages.value.map((doc) => ({
+		id: doc._id,
+		type: doc.type === 'payment' ? 'payment' : doc.type === 'system' ? 'system' : 'chat',
+		content: doc.content || '',
+		sender: doc.senderNickname || '',
+		senderOpenid: doc.senderOpenid || '',
+		payTo: doc.toNickname || '',
+		amount: doc.amount || 0,
+		avatarUrl: doc.senderAvatar || ''
+	}))
+)
 
 /** @description 预置快捷语句（对齐 design/quick-phrases.html，10 条，无 UGC）*/
 const quickPhrases = [
@@ -197,15 +244,6 @@ const quickPhrases = [
 	'再来一把？',
 	'散伙散伙，改天再战'
 ]
-
-/** @description 消息列表（mock，云开发接入后 watch 最近 50 条 + 上拉分页）*/
-const messageList = ref<I_Message[]>([
-	{ type: 'system', content: '张三 加入房间', sender: '', payTo: '', amount: 0, isSelf: false, avatar: AVATAR_PRESET.default },
-	{ type: 'chat', content: '快点吧，我等到花儿都谢了', sender: selfName, payTo: '', amount: 0, isSelf: true, avatar: AVATAR_PRESET.default },
-	{ type: 'chat', content: '好嘞，发牌发牌', sender: '张三', payTo: '', amount: 0, isSelf: false, avatar: AVATAR_PRESET.win },
-	{ type: 'pay', content: '', sender: selfName, payTo: '李四', amount: 50, isSelf: false, avatar: AVATAR_PRESET.default },
-	{ type: 'chat', content: '这把稳了 🎉', sender: '王五', payTo: '', amount: 0, isSelf: false, avatar: AVATAR_PRESET.green }
-])
 
 /** @description 消息流滚动锚点（发送/支出后跳到底部）*/
 const scrollInto = ref('')
@@ -225,6 +263,153 @@ const showTransfer = ref(false)
 /** @description 支出积分输入值*/
 const transferAmount = ref('')
 
+/** @description 转账请求进行中（防重复提交）*/
+const transferring = ref(false)
+
+/** @description 提取云开发错误的关键信息用于提示*/
+const _errMsg = (err: TAny): string => {
+	return err?.errMsg || err?.errMessage || err?.message || '未知错误'
+}
+
+/** @description 成员/消息实时监听器（onUnload 关闭）*/
+let memberWatcher: { close(): void } | null = null
+let messageWatcher: { close(): void } | null = null
+
+/** @description 加载更早消息进行中（防 scrolltoupper 连续触发）*/
+const loadingOlder = ref(false)
+
+/** @description 是否还有更早消息（一批取满 50 视为还有）*/
+const hasMoreMessages = ref(true)
+
+/** @description 接收跳转参数并初始化房间数据*/
+onLoad((options: TAny) => {
+	roomId.value = options?.roomId || ''
+	roomCode.value = options?.roomCode || ''
+	if (!roomId.value) {
+		// 异常进入（无参直达）兜底，正常路径不会出现
+		uni.showToast({ title: '房间参数缺失', icon: 'none' })
+		setTimeout(() => uni.navigateBack(), 800)
+		return
+	}
+	_fetchRoomInfo()
+	_fetchSelf()
+	_watchMembers()
+	_watchMessages()
+})
+
+/** @description 离开页面关闭实时监听*/
+onUnload(() => {
+	memberWatcher?.close()
+	messageWatcher?.close()
+})
+
+/** @description 拉取房间文档（房主/上限/小程序码 fileID）*/
+const _fetchRoomInfo = () => {
+	wx.cloud
+		.database()
+		.collection('rooms')
+		.doc(roomId.value)
+		.get()
+		.then((res) => {
+			roomInfo.value = res.data
+		})
+		.catch((err) => {
+			console.error('[room] 拉取房间信息失败:', err)
+		})
+}
+
+/** @description 拉取自己资料（依赖 users「仅创建者可读写」权限：get 过滤后只返回自己的记录，_openid 即自身身份）*/
+const _fetchSelf = () => {
+	wx.cloud
+		.database()
+		.collection('users')
+		.limit(1)
+		.get()
+		.then((res) => {
+			const doc = res.data[0]
+			if (doc) {
+				myOpenid.value = doc._openid || ''
+				myProfile.value = { nickname: doc.nickname || '', avatarUrl: doc.avatarUrl || '' }
+			}
+		})
+		.catch((err) => {
+			console.error('[room] 拉取个人资料失败:', err)
+		})
+}
+
+/** @description 监听房间成员（roomId 全量），全量快照替换；leftAt 软删在前端过滤，避开 watch 指令查询兼容风险*/
+const _watchMembers = () => {
+	const db = wx.cloud.database()
+	memberWatcher = db
+		.collection('room_members')
+		.where({ roomId: roomId.value })
+		.orderBy('joinedAt', 'asc')
+		.watch({
+			onChange: (snapshot) => {
+				rawMembers.value = snapshot.docs.filter((m) => !m.leftAt)
+			},
+			onError: (err) => {
+				console.error('[room] 成员实时监听失败:', err)
+			}
+		})
+}
+
+/** @description 监听消息：初始快照取最新 50 条（desc 拉取后反转），增量 add 追加尾部（_id 去重）*/
+const _watchMessages = () => {
+	messageWatcher = wx.cloud
+		.database()
+		.collection('messages')
+		.where({ roomId: roomId.value })
+		.orderBy('createdAt', 'desc')
+		.limit(50)
+		.watch({
+			onChange: (snapshot) => {
+				if (snapshot.type === 'init') {
+					rawMessages.value = [...snapshot.docs].reverse()
+					_scrollToBottom()
+					return
+				}
+				snapshot.docChanges.forEach((change) => {
+					if (change.dataType === 'add' && !rawMessages.value.some((m) => m._id === change.doc._id)) {
+						rawMessages.value.push(change.doc)
+						_scrollToBottom()
+					}
+				})
+			},
+			onError: (err) => {
+				// 常见于集合权限未放开读，控制台排查看这里
+				console.error('[room] 消息实时监听失败:', err)
+			}
+		})
+}
+
+/** @description 滚到顶部加载更早消息（skip 已加载条数，desc 取 50 后反转前置）*/
+const _loadOlder = () => {
+	if (!hasMoreMessages.value || loadingOlder.value) return
+	loadingOlder.value = true
+	wx.cloud
+		.database()
+		.collection('messages')
+		.where({ roomId: roomId.value })
+		.orderBy('createdAt', 'desc')
+		.skip(rawMessages.value.length)
+		.limit(50)
+		.get()
+		.then((res) => {
+			if (res.data.length < 50) {
+				hasMoreMessages.value = false
+			}
+			rawMessages.value = [...res.data.reverse(), ...rawMessages.value]
+		})
+		.catch((err) => {
+			console.error('[room] 加载更早消息失败:', err)
+			uni.showToast({ title: '加载失败，请重试', icon: 'none' })
+		})
+		.finally(() => {
+			loadingOlder.value = false
+		})
+}
+
 /** @description 打开二维码弹窗（点邀请占位）*/
 const _openQr = () => {
 	showQrPopup.value = true
@@ -237,16 +422,12 @@ const _closeQr = () => {
 
 /** @description 复制房号*/
 const _copyRoomCode = () => {
-	uni.setClipboardData({ data: roomCode })
+	uni.setClipboardData({ data: roomCode.value })
 }
 
-/** @description 成员头像点击：邀请占位开二维码，其他成员开支出弹窗，自己无响应*/
+/** @description 成员头像点击：自己无响应，其他成员开支出弹窗*/
 const _onMemberTap = (member: I_Member) => {
-	if (member.isInvite) {
-		_openQr()
-		return
-	}
-	if (member.name === selfName) return
+	if (member.openid === myOpenid.value) return
 	transferAmount.value = ''
 	transferTarget.value = member
 	showTransfer.value = true
@@ -257,25 +438,28 @@ const _cancelTransfer = () => {
 	showTransfer.value = false
 }
 
-/** @description 确认支出：校验正整数，落一条 pay 动态（云开发接入后改调 transfer 云函数）*/
+/** @description 确认支出：校验正整数 → transfer 云函数落账发动态（payment 消息由 watch 推送）*/
 const _confirmTransfer = () => {
 	const amount = Number(transferAmount.value)
 	if (!Number.isInteger(amount) || amount <= 0) {
 		uni.showToast({ title: '请输入正整数积分', icon: 'none' })
 		return
 	}
-	if (!transferTarget.value) return
-	messageList.value.push({
-		type: 'pay',
-		content: '',
-		sender: selfName,
-		payTo: transferTarget.value.name,
-		amount,
-		isSelf: false,
-		avatar: AVATAR_PRESET.default
-	})
-	showTransfer.value = false
-	_scrollToBottom()
+	if (!transferTarget.value || transferring.value) return
+	transferring.value = true
+	transfer({ roomId: roomId.value, toOpenid: transferTarget.value.openid, amount })
+		.then(() => {
+			showTransfer.value = false
+			_scrollToBottom()
+		})
+		.catch((err) => {
+			// 开发期把真实错误亮出来，便于定位（不在场/已结束/权限等问题）
+			console.error('[room] 转账失败:', err)
+			uni.showToast({ title: `转账失败：${_errMsg(err)}`, icon: 'none' })
+		})
+		.finally(() => {
+			transferring.value = false
+		})
 }
 
 /** @description 打开快捷语句面板*/
@@ -288,19 +472,32 @@ const _closeSheet = () => {
 	showSheet.value = false
 }
 
-/** @description 发送快捷语句：追加自己的聊天气泡并收起面板（云开发接入后写 messages 集合）*/
+/** @description 发送快捷语句：写 messages 集合（预置语句无 UGC 风险），成功后本地插入 + watch 推送 _id 去重兜底*/
 const _sendPhrase = (phrase: string) => {
-	messageList.value.push({
-		type: 'chat',
-		content: phrase,
-		sender: selfName,
-		payTo: '',
-		amount: 0,
-		isSelf: true,
-		avatar: AVATAR_PRESET.default
-	})
 	showSheet.value = false
-	_scrollToBottom()
+	const doc = {
+		roomId: roomId.value,
+		type: 'chat',
+		senderOpenid: myOpenid.value,
+		senderNickname: myProfile.value?.nickname || '',
+		senderAvatar: myProfile.value?.avatarUrl || '',
+		content: phrase,
+		createdAt: wx.cloud.database().serverDate()
+	}
+	wx.cloud
+		.database()
+		.collection('messages')
+		.add({ data: doc })
+		.then((res) => {
+			if (!rawMessages.value.some((m) => m._id === res._id)) {
+				rawMessages.value.push({ ...doc, _id: res._id })
+				_scrollToBottom()
+			}
+		})
+		.catch((err) => {
+			console.error('[room] 发送快捷语句失败:', err)
+			uni.showToast({ title: `发送失败：${_errMsg(err)}`, icon: 'none' })
+		})
 }
 
 /** @description 滚动消息流到底部（先清空再赋值触发 scroll-into-view）*/
@@ -313,9 +510,13 @@ const _scrollToBottom = () => {
 	})
 }
 
-/** @description 好友转发卡片：path 带房号（云开发接入后扫码 scene 同源）*/
+/** @description 好友转发卡片：自定义封面图替代页面快照，path 指首页（统一走资料拦截 + joinRoom），房号随 query 传递*/
 onShareAppMessage(() => {
-	return { title: `来打牌，房号 ${roomCode}`, path: `/pages/room/index?roomCode=${roomCode}` }
+	return {
+		title: `来打牌，房号 ${roomCode.value}`,
+		path: `/pages/home/index?roomCode=${roomCode.value}`,
+		imageUrl: '/static/share-cover.png'
+	}
 })
 </script>
 

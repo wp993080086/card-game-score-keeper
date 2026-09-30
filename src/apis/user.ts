@@ -7,6 +7,8 @@
 export interface I_UserProfile {
 	/** 数据库记录 id */
 	_id: string
+	/** 用户 openid（「仅创建者可读写」权限下 get 返回的必是自己记录，_openid 即自身身份）*/
+	_openid?: string
 	/** 昵称 */
 	nickname: string
 	/** 云存储头像 fileID（cloud:// 开头，可直接作为 image 的 src；空串表示未设置）*/

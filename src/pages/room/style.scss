@@ -84,6 +84,14 @@
 	font-size: 44rpx;
 	font-weight: 300;
 }
+
+/* 真实头像图：填满 wrapper 圆形区域，自身 border-radius 裁圆（房主 wrapper 为放角标开了 overflow:visible，不能依赖它裁圆） */
+.members-bar .m-item .avatar-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
 /* 房主角标：头像右下角小圆徽章（::after 定位在盒子外，需放开 .g-avatar 的 overflow 裁剪） */
 .members-bar .m-item.owner .g-avatar {
 	position: relative;
@@ -295,6 +303,13 @@
 	@include flex_center;
 	font-size: 26rpx;
 	color: var(--text-3);
+}
+
+/* 真实小程序码图（cloud fileID 直接作 src） */
+.popup .qr-img {
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 .popup .tip {
 	text-align: center;
