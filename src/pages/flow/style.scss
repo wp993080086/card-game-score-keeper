@@ -1,0 +1,140 @@
+/* 流水明细页 —— 本房间原始转账流水，按日归档 */
+
+.flow-page {
+	padding: 32rpx 0 48rpx;
+	background: var(--bg);
+	box-sizing: border-box;
+}
+
+/* 顶部汇总条（对齐 room-detail 头卡风格） */
+.head-bar {
+	margin: 0 32rpx;
+	padding: 28rpx 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: linear-gradient(135deg, #edf2fc 0%, #f5f8ff 100%);
+	border-radius: var(--radius-lg);
+	border: 2rpx solid #dde7fa;
+	box-shadow: var(--shadow-card);
+}
+.head-bar .code {
+	font-family: monospace;
+	font-size: 34rpx;
+	font-weight: 700;
+	letter-spacing: 4rpx;
+	color: var(--text-1);
+}
+.head-bar .total {
+	font-size: 24rpx;
+	color: var(--text-2);
+}
+
+/* 分组标题 */
+.group-title {
+	font-size: 28rpx;
+	font-weight: 600;
+	color: var(--text-1);
+	margin: 40rpx 32rpx 20rpx;
+}
+
+/* 流水卡片 */
+.flow-card {
+	margin: 0 32rpx 8rpx;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-card);
+	overflow: hidden;
+}
+.flow-item {
+	display: flex;
+	align-items: center;
+	gap: 20rpx;
+	padding: 26rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
+}
+.flow-item:last-child {
+	border-bottom: none;
+}
+.flow-item .time {
+	width: 88rpx;
+	flex-shrink: 0;
+	font-size: 24rpx;
+	font-family: monospace;
+	color: var(--text-3);
+}
+.flow-item .who {
+	flex: 1;
+	font-size: 28rpx;
+	font-weight: 500;
+	color: var(--text-1);
+	@include omit;
+}
+.flow-item .amount {
+	flex-shrink: 0;
+	font-size: 30rpx;
+	font-weight: 700;
+	color: var(--text-1);
+}
+
+/* 无流水空状态（与 settlement/room-detail 页 .card-empty 同款） */
+.card-empty {
+	padding: 48rpx 0 44rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8rpx;
+}
+.card-empty .ico {
+	font-size: 56rpx;
+	line-height: 1;
+}
+.card-empty .txt {
+	margin-top: 8rpx;
+	font-size: 26rpx;
+	font-weight: 500;
+	color: var(--text-2);
+}
+.card-empty .sub {
+	font-size: 24rpx;
+	color: var(--text-3);
+}
+
+/* 整页空状态：进入来源未携带房间 id（与 room-detail 页同款） */
+.page-empty {
+	padding: 200rpx 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.page-empty .ico {
+	font-size: 96rpx;
+	line-height: 1;
+}
+.page-empty .txt {
+	margin-top: 32rpx;
+	font-size: 30rpx;
+	font-weight: 600;
+	color: var(--text-1);
+}
+.page-empty .sub {
+	margin-top: 12rpx;
+	font-size: 26rpx;
+	color: var(--text-3);
+}
+.page-empty .ghost-btn {
+	margin-top: 56rpx;
+	width: 260rpx;
+	height: 80rpx;
+	line-height: 80rpx;
+	padding: 0;
+	background: transparent;
+	border: 2rpx solid var(--primary);
+	border-radius: var(--radius-md);
+	color: var(--primary);
+	font-size: 28rpx;
+	font-weight: 500;
+}
+.page-empty .ghost-btn::after {
+	border: none;
+}

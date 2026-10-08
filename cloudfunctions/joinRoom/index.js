@@ -28,11 +28,17 @@ exports.main = async (event) => {
 		throw new Error('请先完善资料')
 	}
 
-	// 只允许进入进行中的房间
-	const roomRes = await db.collection('rooms').where({ roomCode, status: 'gaming' }).limit(1).get()
+	// 取最新一条同码房（gaming 判重保证同码最多一个 gaming，最新创建的房代表当前语义）
+	const roomRes = await db.collection('rooms').where({ roomCode }).orderBy('createdAt', 'desc').limit(1).get()
 	const room = roomRes.data[0]
 	if (!room) {
-		throw new Error('房间不存在或已结束')
+		throw new Error('房间不存在')
+	}
+	if (room.status === 'dissolved') {
+		throw new Error('房间已解散')
+	}
+	if (room.status === 'settled') {
+		throw new Error('该局已结算，无需加入')
 	}
 
 	// 幂等：已在房内（未退出）直接返回，重复点卡片/重复扫码不重复登记

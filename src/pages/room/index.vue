@@ -54,7 +54,8 @@
 
 		<!-- 底部操作栏 -->
 		<view class="actions-bar">
-			<button class="btn primary block" @click="_openSheet">💬 快捷语句</button>
+			<button class="btn outline" @click="_goSettle">🏁 结算</button>
+			<button class="btn primary" @click="_openSheet">💬 快捷语句</button>
 		</view>
 
 		<!-- 房间二维码弹窗：对齐 design/qr-popup.html（常驻渲染 + .show 切换，进出场均有过渡） -->
@@ -465,6 +466,11 @@ const _confirmTransfer = () => {
 /** @description 打开快捷语句面板*/
 const _openSheet = () => {
 	showSheet.value = true
+}
+
+/** @description 前往结算页（结算方案预览与确认、退出/解散入口）*/
+const _goSettle = () => {
+	uni.navigateTo({ url: `/pages/settlement/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
 }
 
 /** @description 关闭快捷语句面板*/

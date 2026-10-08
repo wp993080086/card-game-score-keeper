@@ -32,6 +32,12 @@ declare const wx: {
 		callFunction(params: { name: string; data?: TDict }): Promise<{ result: TAny }>
 		/** 上传本地文件到云存储 */
 		uploadFile(params: { cloudPath: string; filePath: string }): Promise<{ fileID: string }>
+		/** 换取云存储文件的临时访问链接（canvas 画图等需要真实 URL 的场景）*/
+		getTempFileURL(params: { fileList: string[] }): Promise<{ fileList: { fileID: string; tempFileURL: string; status: number }[] }>
+		/** 导出 canvas 2d 画布为临时图片 */
+		canvasToTempFilePath(params: { canvas: TAny; success?: (res: { tempFilePath: string }) => void; fail?: (err: TAny) => void }): void
+		/** 调起图片转发/保存面板（发送给朋友、保存图片）*/
+		showShareImageMenu(params: { path: string; success?: TFunc; fail?: (err: TAny) => void }): void
 		/** 获取云数据库实例 */
 		database(): {
 			/** 查询指令（db.command.exists 等）*/

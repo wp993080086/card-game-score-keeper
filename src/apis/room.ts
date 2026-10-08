@@ -64,6 +64,12 @@ export interface I_SettleResult {
 	netScores: I_NetScore[]
 	/** 房间是否已结算落库（preview 返回 false，确认/已结算快照返回 true） */
 	settled: boolean
+	/** 转账流水笔数（game_records 条数） */
+	recordCount?: number
+	/** 结算时间（serverDate 序列化的 ISO 串，未结算为 null/缺省） */
+	settledAt?: string | null
+	/** 首页小程序码 fileID（战绩图底部用，生成失败为空串） */
+	homeQrFileID?: string
 }
 
 /**

@@ -85,13 +85,31 @@ const _calcSettlement = async (roomId) => {
 		}))
 		.sort((a, b) => b.delta - a.delta)
 
-	return { transfers, netScores }
+	return { transfers, netScores, recordCount: records.length }
+}
+
+/**
+ * @description 生成首页小程序码（战绩图底部用；房间已结算，进房码无意义。scene='h' 非合法房码，首页扫码解析时自动忽略）
+ * @return {Promise<string>} 码文件 fileID，失败返回空串（不阻塞结算）
+ */
+const _makeHomeQr = async () => {
+	try {
+		const res = await cloud.openapi.wxacode.getUnlimited({ scene: 'h', checkPath: false })
+		const { fileID } = await cloud.uploadFile({
+			cloudPath: `qrcodes/home-${Date.now()}.png`,
+			fileContent: res.buffer
+		})
+		return fileID
+	} catch (err) {
+		console.error('[settle] 首页码生成失败:', err)
+		return ''
+	}
 }
 
 /**
  * @description 结算：preview=true 只算方案不落库（结算页预览，全员可看）；否则落库（仅房主，已 settled 幂等返回快照）
  * @param {object} event { roomId, preview }
- * @return {Promise<object>} { transfers, netScores, settled }
+ * @return {Promise<object>} { transfers, netScores, settled, recordCount, settledAt, homeQrFileID }
  */
 exports.main = async (event) => {
 	const { OPENID } = cloud.getWXContext()
@@ -107,22 +125,29 @@ exports.main = async (event) => {
 		throw new Error('房间不存在')
 	}
 
-	// 已结算：直接返回已有快照（幂等，结算页可重复进入）
+	// 已结算：直接返回已有快照（幂等，结算页/对局详情可重复进入）
 	if (room.status === 'settled') {
 		const sRes = await db.collection('settlements').where({ roomId }).orderBy('confirmedAt', 'desc').limit(1).get()
 		const snapshot = sRes.data[0]
 		if (!snapshot) {
 			throw new Error('结算数据缺失')
 		}
-		return { transfers: snapshot.transfers || [], netScores: snapshot.netScores || [], settled: true }
+		return {
+			transfers: snapshot.transfers || [],
+			netScores: snapshot.netScores || [],
+			settled: true,
+			recordCount: snapshot.recordCount || 0,
+			settledAt: snapshot.confirmedAt || null,
+			homeQrFileID: snapshot.homeQrFileID || ''
+		}
 	}
 	if (room.status !== 'gaming') {
 		throw new Error('房间已解散')
 	}
 
-	const { transfers, netScores } = await _calcSettlement(roomId)
+	const { transfers, netScores, recordCount } = await _calcSettlement(roomId)
 	if (preview) {
-		return { transfers, netScores, settled: false }
+		return { transfers, netScores, settled: false, recordCount }
 	}
 
 	// 落库仅房主
@@ -130,11 +155,16 @@ exports.main = async (event) => {
 		throw new Error('仅房主可结算')
 	}
 
+	// 首页小程序码（战绩图用），失败不阻塞结算
+	const homeQrFileID = await _makeHomeQr()
+
 	await db.collection('settlements').add({
 		data: {
 			roomId,
 			transfers,
 			netScores,
+			recordCount,
+			homeQrFileID,
 			confirmedBy: OPENID,
 			confirmedAt: db.serverDate()
 		}
@@ -159,5 +189,5 @@ exports.main = async (event) => {
 		}
 	})
 
-	return { transfers, netScores, settled: true }
+	return { transfers, netScores, settled: true, recordCount, homeQrFileID }
 }

@@ -138,11 +138,11 @@
 	padding-left: 16rpx;
 }
 
-/* 功能区 2×2 网格 */
-.grid-2 {
+/* 功能区 3 卡网格（排行榜已移除） */
+.grid-3 {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 24rpx;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 16rpx;
 }
 .action-card {
 	background: var(--bg);
@@ -188,6 +188,56 @@
 .share-bar .btn {
 	flex: 1;
 	padding: 0;
+}
+
+/* 非房主等待提示（与按钮同占位） */
+.share-bar .waiting {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28rpx;
+	color: var(--text-3);
+}
+
+/* 真实头像图：填满圆形头像位 */
+.avatar-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+/* 无转账空态（与 room-detail 页 .card-empty 同款） */
+.card-empty {
+	padding: 48rpx 0 44rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8rpx;
+}
+.card-empty .ico {
+	font-size: 56rpx;
+	line-height: 1;
+}
+.card-empty .txt {
+	margin-top: 8rpx;
+	font-size: 26rpx;
+	font-weight: 500;
+	color: var(--text-2);
+}
+.card-empty .sub {
+	font-size: 24rpx;
+	color: var(--text-3);
+}
+
+/* 战绩图画布：屏外渲染，仅用于生成图片（canvas 2d 无法离屏创建） */
+.poster-canvas {
+	position: fixed;
+	left: -9999px;
+	top: 0;
+	width: 375px;
+	height: 620px;
 }
 
 /* 遮罩 */

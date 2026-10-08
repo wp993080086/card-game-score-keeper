@@ -124,6 +124,28 @@
 	padding: 8rpx 0;
 	box-shadow: var(--shadow-card);
 }
+
+/* 流水明细入口 */
+.flow-entry {
+	margin: 24rpx 32rpx 0;
+	padding: 26rpx 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: var(--bg);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-card);
+	font-size: 28rpx;
+	font-weight: 500;
+	color: var(--text-1);
+}
+.flow-entry:active {
+	opacity: 0.7;
+}
+.flow-entry .arrow {
+	color: var(--text-3);
+	font-size: 32rpx;
+}
 .stat-row {
 	display: flex;
 	align-items: center;
@@ -151,4 +173,74 @@
 }
 .stat-row .val.lose {
 	color: var(--lose);
+}
+
+/* 真实头像图：填满圆形头像位 */
+.avatar-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+/* 卡片空状态（结算方案/每人输赢无数据时） */
+.card-empty {
+	padding: 48rpx 0 44rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8rpx;
+}
+.card-empty .ico {
+	font-size: 56rpx;
+	line-height: 1;
+}
+.card-empty .txt {
+	margin-top: 8rpx;
+	font-size: 26rpx;
+	font-weight: 500;
+	color: var(--text-2);
+}
+.card-empty .sub {
+	font-size: 24rpx;
+	color: var(--text-3);
+}
+
+/* 整页空状态：进入来源未携带房间 id */
+.page-empty {
+	padding: 200rpx 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.page-empty .ico {
+	font-size: 96rpx;
+	line-height: 1;
+}
+.page-empty .txt {
+	margin-top: 32rpx;
+	font-size: 30rpx;
+	font-weight: 600;
+	color: var(--text-1);
+}
+.page-empty .sub {
+	margin-top: 12rpx;
+	font-size: 26rpx;
+	color: var(--text-3);
+}
+.page-empty .ghost-btn {
+	margin-top: 56rpx;
+	width: 260rpx;
+	height: 80rpx;
+	line-height: 80rpx;
+	padding: 0;
+	background: transparent;
+	border: 2rpx solid var(--primary);
+	border-radius: var(--radius-md);
+	color: var(--primary);
+	font-size: 28rpx;
+	font-weight: 500;
+}
+.page-empty .ghost-btn::after {
+	border: none;
 }

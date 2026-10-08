@@ -37,6 +37,12 @@
 			}
 		},
 		{
+			"path": "pages/flow/index",
+			"style": {
+				"navigationBarTitleText": "流水明细"
+			}
+		},
+		{
 			"path": "pages/manual/index",
 			"style": {
 				"navigationBarTitleText": "使用手册"

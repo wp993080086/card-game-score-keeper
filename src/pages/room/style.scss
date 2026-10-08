@@ -196,9 +196,14 @@
 
 /* 底部操作栏 */
 .actions-bar {
+	display: flex;
+	gap: 24rpx;
 	background: var(--bg);
 	border-top: 2rpx solid var(--divider);
 	padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+}
+.actions-bar .btn {
+	flex: 1;
 }
 
 /* 遮罩（常驻渲染 + .show 切换：opacity 淡入淡出，visibility 保证隐藏时不可交互） */

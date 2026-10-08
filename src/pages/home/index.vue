@@ -177,9 +177,13 @@ let pendingJoinCode = ''
 /** @description 解析冷启动参数中的房号（扫码进首页 scene 为 URL 编码；转发卡片直接带 roomCode），待资料就绪后自动进房*/
 onLoad((options: TAny) => {
 	const scene = options?.scene ? decodeURIComponent(options.scene) : ''
-	pendingJoinCode = String(scene || options?.roomCode || '')
+	const code = String(scene || options?.roomCode || '')
 		.trim()
 		.toUpperCase()
+	// 仅接受合法短码（4 位去易混淆字符），战绩图首页码 scene='h' 等非房码在此挡掉
+	if (/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/.test(code)) {
+		pendingJoinCode = code
+	}
 })
 
 /** @description 进入页面拉取资料与进行中房间（不自动弹窗；未完善时用户卡展示默认资料，进房前才引导完善）*/

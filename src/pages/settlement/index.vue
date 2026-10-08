@@ -24,16 +24,15 @@
 					<view class="to">{{ plan.to }}</view>
 					<view class="amount">{{ plan.amount }} 分</view>
 				</view>
-				<view v-if="!previewing && !planList.length" class="plan-empty">本局没有转账记录，无需结算</view>
+				<view v-if="!previewing && !planList.length" class="card-empty">
+					<view class="ico">🃏</view>
+					<view class="txt">本局没有转账记录</view>
+				</view>
 			</view>
 
 			<!-- 功能区 -->
 			<view class="section-title">更多</view>
-			<view class="grid-2">
-				<view class="action-card" @click="_openRanking">
-					<view class="ico-wrap" style="background: #fff3e8">🏆</view>
-					<view class="label">排行榜</view>
-				</view>
+			<view class="grid-3">
 				<view class="action-card" @click="_openRecords">
 					<view class="ico-wrap" style="background: #e8f5e9">📋</view>
 					<view class="label">流水明细</view>
@@ -74,6 +73,9 @@
 				</view>
 			</view>
 		</view>
+
+		<!-- 战绩图绘制画布（屏外渲染，仅用于生成图片） -->
+		<canvas id="poster" type="2d" class="poster-canvas"></canvas>
 	</view>
 </template>
 
@@ -215,6 +217,7 @@ const _fetchPreview = () => {
 		.then((res) => {
 			settled.value = res.settled
 			netScores.value = res.netScores || []
+			homeQrFileID.value = res.homeQrFileID || ''
 			planList.value = (res.transfers || []).map((t: I_TransferItem) => {
 				const from = res.netScores.find((s) => s.openid === t.fromOpenid)
 				const to = res.netScores.find((s) => s.openid === t.toOpenid)
@@ -294,14 +297,9 @@ const _leave = () => {
 		})
 }
 
-/** @description 打开排行榜*/
-const _openRanking = () => {
-	uni.showToast({ title: '即将上线', icon: 'none' })
-}
-
-/** @description 打开流水明细*/
+/** @description 打开流水明细（本房间原始转账流水）*/
 const _openRecords = () => {
-	uni.showToast({ title: '即将上线', icon: 'none' })
+	uni.navigateTo({ url: `/pages/flow/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
 }
 
 /** @description 打开使用手册*/
@@ -311,7 +309,214 @@ const _openManual = () => {
 
 /** @description 分享战绩图（canvas 绘制第 7 步实现）*/
 const _shareResult = () => {
-	uni.showToast({ title: '即将上线', icon: 'none' })
+	if (!settled.value) {
+		uni.showToast({ title: '请先完成结算', icon: 'none' })
+		return
+	}
+	uni.showLoading({ title: '生成中…', mask: true })
+	_getPosterNode()
+		.then((node) => _loadHomeQr().then((qrPath) => _drawPoster(node, qrPath)))
+		.then(() => _exportPoster())
+		.then((filePath) => {
+			uni.hideLoading()
+			// 系统图片面板自带「发送给朋友 / 保存图片」，一个入口覆盖转发与存相册
+			wx.showShareImageMenu({
+				path: filePath,
+				fail: (err) => {
+					// 用户取消不算错误
+					if (err?.errMsg && String(err.errMsg).includes('cancel')) return
+					console.error('[settlement] 分享面板调起失败:', err)
+				}
+			})
+		})
+		.catch((err) => {
+			uni.hideLoading()
+			console.error('[settlement] 战绩图生成失败:', err)
+			uni.showToast({ title: `生成失败：${_errMsg(err)}`, icon: 'none' })
+		})
+}
+
+/** @description 战绩图硬编码配色（canvas 不认 CSS 变量，取设计变量同款色值）*/
+const POSTER_COLOR = {
+	title: '#1f2329',
+	sub: '#86909c',
+	primary: '#4a78d9',
+	primarySoft: '#edf2fc',
+	win: '#ff8a3d',
+	lose: '#f76565',
+	divider: '#edf0f5'
+}
+
+/** @description 战绩图头像配色（与页面 AVATAR_PRESET 同观感的具体色值）*/
+const POSTER_AVATAR_COLORS: TDict<{ bg: string; color: string }> = {
+	default: { bg: '#edf2fc', color: '#4a78d9' },
+	win: { bg: '#fff3e8', color: '#d96a1f' },
+	lose: { bg: '#fff1ed', color: '#d63a3a' },
+	green: { bg: '#e8f7ee', color: '#34a35b' }
+}
+
+/** @description 战绩图头像配色哈希*/
+const posterHashColor = (name: string): { bg: string; color: string } => {
+	const sum = [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+	return POSTER_AVATAR_COLORS[AVATAR_KEYS[sum % AVATAR_KEYS.length]]
+}
+
+/** @description 战绩图画布逻辑宽度与行高*/
+const POSTER_W = 375
+const POSTER_ROW_H = 44
+const POSTER_ROW_TOP = 132
+
+/** @description 画布节点缓存（canvas 2d 不可离屏，重复生成复用节点）*/
+let posterNode: TAny = null
+
+/** @description 查询画布节点并按 dpr 初始化*/
+const _getPosterNode = (): Promise<TAny> => {
+	if (posterNode) return Promise.resolve(posterNode)
+	return new Promise((resolve, reject) => {
+		uni
+			.createSelectorQuery()
+			.select('#poster')
+			.fields({ node: true, size: true }, (res: TAny) => {
+				if (!res?.node) {
+					reject(new Error('画布初始化失败'))
+					return
+				}
+				posterNode = res.node
+				resolve(posterNode)
+			})
+			.exec()
+	})
+}
+
+/** @description 首页码 fileID（settle 快照带出）*/
+const homeQrFileID = ref('')
+
+/** @description 首页码转本地临时路径（fileID → 临时 URL → 下载）；失败返回空串，战绩图降级为无码*/
+const _loadHomeQr = (): Promise<string> => {
+	if (!homeQrFileID.value) return Promise.resolve('')
+	return new Promise((resolve) => {
+		wx.cloud
+			.getTempFileURL({ fileList: [homeQrFileID.value] })
+			.then((res: TAny) => {
+				const url = res?.fileList?.[0]?.tempFileURL
+				if (!url) {
+					resolve('')
+					return
+				}
+				uni.downloadFile({
+					url,
+					success: (d) => resolve(d.statusCode === 200 ? d.tempFilePath : ''),
+					fail: () => resolve('')
+				})
+			})
+			.catch(() => resolve(''))
+	})
+}
+
+/** @description 绘制战绩图：标题/房号 + 净额排名（MVP 皇冠）+ 底部首页码，高度随人数自适应*/
+const _drawPoster = (node: TAny, qrPath: string): Promise<void> => {
+	return new Promise((resolve, reject) => {
+		const list = netScores.value.slice(0, 8)
+		const qrY = POSTER_ROW_TOP + list.length * POSTER_ROW_H + 24
+		const posterH = qrY + (qrPath ? 96 + 46 : 56)
+		const dpr = uni.getSystemInfoSync().pixelRatio || 2
+
+		node.width = POSTER_W * dpr
+		node.height = posterH * dpr
+		const ctx = node.getContext('2d')
+		ctx.scale(dpr, dpr)
+
+		// 背景
+		ctx.fillStyle = '#ffffff'
+		ctx.fillRect(0, 0, POSTER_W, posterH)
+
+		// 标题与房号
+		ctx.textAlign = 'center'
+		ctx.fillStyle = POSTER_COLOR.title
+		ctx.font = 'bold 22px sans-serif'
+		ctx.fillText('打牌好友记账', POSTER_W / 2, 48)
+		ctx.fillStyle = POSTER_COLOR.sub
+		ctx.font = '14px sans-serif'
+		ctx.fillText(`房号 ${roomCode.value} · 牌局结算`, POSTER_W / 2, 74)
+
+		// 分割线
+		ctx.strokeStyle = POSTER_COLOR.divider
+		ctx.lineWidth = 1
+		ctx.beginPath()
+		ctx.moveTo(24, 96)
+		ctx.lineTo(POSTER_W - 24, 96)
+		ctx.stroke()
+
+		// 排名列表
+		list.forEach((s, i) => {
+			const y = POSTER_ROW_TOP + i * POSTER_ROW_H
+			// 冠军皇冠 / 序号
+			ctx.textAlign = 'left'
+			ctx.fillStyle = POSTER_COLOR.title
+			ctx.font = i === 0 ? '16px sans-serif' : '14px sans-serif'
+			ctx.fillText(i === 0 ? '👑' : `${i + 1}`, 24, y + 2)
+			// 圆头像（配色底 + 昵称首字）
+			const c = posterHashColor(s.name)
+			ctx.beginPath()
+			ctx.arc(68, y - 4, 16, 0, Math.PI * 2)
+			ctx.fillStyle = c.bg
+			ctx.fill()
+			ctx.fillStyle = c.color
+			ctx.font = 'bold 13px sans-serif'
+			ctx.textAlign = 'center'
+			ctx.fillText(s.name.charAt(0), 68, y + 1)
+			// 昵称
+			ctx.fillStyle = POSTER_COLOR.title
+			ctx.font = '16px sans-serif'
+			ctx.textAlign = 'left'
+			ctx.fillText(s.name.length > 8 ? `${s.name.slice(0, 8)}…` : s.name, 96, y + 2)
+			// 净额
+			ctx.fillStyle = s.delta >= 0 ? POSTER_COLOR.win : POSTER_COLOR.lose
+			ctx.font = 'bold 17px sans-serif'
+			ctx.textAlign = 'right'
+			ctx.fillText(`${s.delta >= 0 ? '+' : ''}${s.delta} 分`, POSTER_W - 24, y + 2)
+		})
+
+		const finish = () => resolve()
+		if (qrPath) {
+			// 首页小程序码
+			const img = node.createImage()
+			img.onload = () => {
+				ctx.drawImage(img, (POSTER_W - 96) / 2, qrY, 96, 96)
+				ctx.fillStyle = POSTER_COLOR.sub
+				ctx.font = '12px sans-serif'
+				ctx.textAlign = 'center'
+				ctx.fillText('扫码记牌，理清账目', POSTER_W / 2, qrY + 118)
+				finish()
+			}
+			img.onerror = () => {
+				// 码图加载失败降级为纯文字底部
+				ctx.fillStyle = POSTER_COLOR.sub
+				ctx.font = '12px sans-serif'
+				ctx.textAlign = 'center'
+				ctx.fillText('—— 打牌好友记账 ——', POSTER_W / 2, qrY + 24)
+				finish()
+			}
+			img.src = qrPath
+		} else {
+			ctx.fillStyle = POSTER_COLOR.sub
+			ctx.font = '12px sans-serif'
+			ctx.textAlign = 'center'
+			ctx.fillText('—— 打牌好友记账 ——', POSTER_W / 2, qrY + 12)
+			finish()
+		}
+	})
+}
+
+/** @description 导出画布为临时图片*/
+const _exportPoster = (): Promise<string> => {
+	return new Promise((resolve, reject) => {
+		wx.canvasToTempFilePath({
+			canvas: posterNode,
+			success: (res) => resolve(res.tempFilePath),
+			fail: reject
+		})
+	})
 }
 
 /** @description 关闭解散确认弹窗*/
