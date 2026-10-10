@@ -57,9 +57,11 @@
 		"appid": "wx8a69e474ba11516b",
 		"cloudfunctionRoot": "cloudfunctions/",
 		"setting": {
-			"urlCheck": false
+			"urlCheck": false,
+			"minified": true
 		},
-		"usingComponents": true
+		"usingComponents": true,
+		"lazyCodeLoading": "requiredComponents"
 	},
 	"mp-alipay": {
 		"usingComponents": true

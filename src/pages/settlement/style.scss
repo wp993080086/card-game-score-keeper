@@ -51,6 +51,9 @@
 }
 .mvp .avatar-wrap {
 	position: relative;
+	/* 显式定尺寸：头像位一旦塌缩，皇冠角标会漂到卡片中间、收益文字被顶上来挤成一团 */
+	width: 112rpx;
+	height: 112rpx;
 	@include flex_center;
 }
 .mvp .avatar-wrap .g-avatar {
@@ -200,12 +203,20 @@
 	color: var(--text-3);
 }
 
-/* 真实头像图：填满圆形头像位 */
+/* 真实头像图：显式定尺寸（对齐模板上 g-avatar lg/xs 的规格）。
+   勿用 100% 宽高——百分比相对自适应父级无法解析会让头像位塌缩、皇冠漂移；
+   相对整行解析又会撑成全宽大块挤扁同行文字（home 页 user-card 同款教训） */
 .avatar-img {
 	display: block;
-	width: 100%;
-	height: 100%;
 	border-radius: 50%;
+}
+.mvp .avatar-wrap .avatar-img {
+	width: 112rpx;
+	height: 112rpx;
+}
+.plan-item .avatar-img {
+	width: 48rpx;
+	height: 48rpx;
 }
 
 /* 无转账空态（与 room-detail 页 .card-empty 同款） */

@@ -4,7 +4,13 @@
 			<!-- MVP 区：头像 + 右上角皇冠角标 + 收益（净额最高者） -->
 			<view class="mvp">
 				<view class="avatar-wrap">
-					<image v-if="mvp?.avatarUrl" class="g-avatar lg win-avatar avatar-img" :src="mvp.avatarUrl" mode="aspectFill" />
+					<image
+						v-if="mvp?.avatarUrl"
+						class="g-avatar lg win-avatar avatar-img"
+						:src="avatarSrc(mvp.avatarUrl)"
+						mode="aspectFill"
+						@error="onAvatarError(mvp.avatarUrl)"
+					/>
 					<view v-else class="g-avatar lg win-avatar">{{ mvp ? mvp.nickname.charAt(0) : '牌' }}</view>
 				</view>
 				<view class="earnings">
@@ -13,18 +19,31 @@
 				</view>
 			</view>
 
-			<!-- 结算方案 -->
+			<!-- 结算方案：加载中 / 失败可重试 / 真无转账，三态区分（失败不再误显示"没有转账记录"） -->
 			<view class="section-title">结算方案</view>
 			<view class="plans">
 				<view v-for="plan in planList" :key="`${plan.fromOpenid}-${plan.toOpenid}`" class="plan-item">
-					<image v-if="plan.fromAvatarUrl" class="g-avatar xs avatar-img" :src="plan.fromAvatarUrl" mode="aspectFill" />
+					<image
+						v-if="plan.fromAvatarUrl"
+						class="g-avatar xs avatar-img"
+						:src="avatarSrc(plan.fromAvatarUrl)"
+						mode="aspectFill"
+						@error="onAvatarError(plan.fromAvatarUrl)"
+					/>
 					<view v-else class="g-avatar xs" :style="avatarStyle(hashColor(plan.from))">{{ plan.from.charAt(0) }}</view>
 					<view class="from">{{ plan.from }}</view>
 					<view class="arrow">→</view>
 					<view class="to">{{ plan.to }}</view>
 					<view class="amount">{{ plan.amount }} 分</view>
 				</view>
-				<view v-if="!previewing && !planList.length" class="card-empty">
+				<view v-if="previewing" class="card-empty">
+					<view class="txt">结算方案计算中…</view>
+				</view>
+				<view v-else-if="loadError" class="card-empty" @click="_fetchPreview">
+					<view class="ico">⚠️</view>
+					<view class="txt">结算方案加载失败，点击重试</view>
+				</view>
+				<view v-else-if="!planList.length" class="card-empty">
 					<view class="ico">🃏</view>
 					<view class="txt">本局没有转账记录</view>
 				</view>
@@ -83,6 +102,8 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { leaveRoom, settle } from '@/apis/room'
+import { cloudErrMsg } from '@/apis/cloud'
+import { useAvatarFallback } from '@/utils/avatar'
 import type { I_NetScore, I_TransferItem } from '@/apis/room'
 
 defineOptions({
@@ -143,6 +164,12 @@ const settled = ref(false)
 /** @description 方案计算中（settle 预览请求）*/
 const previewing = ref(true)
 
+/** @description 方案加载失败（与"真无转账"区分开，支持点击重试）*/
+const loadError = ref(false)
+
+/** @description 头像加载失败兜底（失败地址换本地 avatar.png 占位）*/
+const { onAvatarError, avatarSrc } = useAvatarFallback()
+
 /** @description 最少转账方案（昵称渲染模型）*/
 const planList = ref<I_PlanItem[]>([])
 
@@ -163,11 +190,6 @@ const mvp = computed(() => netScores.value[0] || null)
 
 /** @description 是否房主*/
 const isOwner = computed(() => !!roomInfo.value && roomInfo.value.ownerOpenid === myOpenid.value)
-
-/** @description 提取云开发错误的关键信息用于提示*/
-const _errMsg = (err: TAny): string => {
-	return err?.errMsg || err?.errMessage || err?.message || '未知错误'
-}
 
 /** @description 接收跳转参数并拉取结算数据*/
 onLoad((options: TAny) => {
@@ -213,6 +235,8 @@ const _fetchSelf = () => {
 
 /** @description 预览结算方案（settle preview 模式全员可调；已结算返回落库快照）*/
 const _fetchPreview = () => {
+	previewing.value = true
+	loadError.value = false
 	settle(roomId.value, true)
 		.then((res) => {
 			settled.value = res.settled
@@ -233,7 +257,8 @@ const _fetchPreview = () => {
 		})
 		.catch((err) => {
 			console.error('[settlement] 结算方案计算失败:', err)
-			uni.showToast({ title: `结算方案加载失败：${_errMsg(err)}`, icon: 'none' })
+			loadError.value = true
+			uni.showToast({ title: `结算方案加载失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
 			previewing.value = false
@@ -247,21 +272,23 @@ const _confirmSettle = () => {
 	settle(roomId.value, false)
 		.then(() => {
 			settled.value = true
+			// 通知首页清掉该房间的进行中卡片（首页实例常驻时，避免返回后短暂显示已结束的牌局）
+			uni.$emit('room:settled', roomId.value)
 			uni.showToast({ title: '已结算', icon: 'success' })
 			setTimeout(() => _goDetail(), 600)
 		})
 		.catch((err) => {
 			console.error('[settlement] 确认结算失败:', err)
-			uni.showToast({ title: `结算失败：${_errMsg(err)}`, icon: 'none' })
+			uni.showToast({ title: `结算失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
 			confirming.value = false
 		})
 }
 
-/** @description 前往对局详情*/
+/** @description 前往对局详情：reLaunch 清栈（结算完成，房间页/结算页使命结束，避免返回键退回已结束的僵尸页面）*/
 const _goDetail = () => {
-	uni.navigateTo({ url: `/pages/room-detail/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
+	uni.reLaunch({ url: `/pages/room-detail/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
 }
 
 /** @description 退出入口：房主弹解散确认，成员直接软删退出*/
@@ -290,7 +317,7 @@ const _leave = () => {
 		.catch((err) => {
 			console.error('[settlement] 退出失败:', err)
 			uni.hideLoading()
-			uni.showToast({ title: `退出失败：${_errMsg(err)}`, icon: 'none' })
+			uni.showToast({ title: `退出失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
 			leaving.value = false
@@ -332,7 +359,7 @@ const _shareResult = () => {
 		.catch((err) => {
 			uni.hideLoading()
 			console.error('[settlement] 战绩图生成失败:', err)
-			uni.showToast({ title: `生成失败：${_errMsg(err)}`, icon: 'none' })
+			uni.showToast({ title: `生成失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 }
 

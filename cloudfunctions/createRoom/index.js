@@ -63,7 +63,7 @@ const _makeQrCode = async (roomCode) => {
 
 /**
  * @description 创建房间：分配短码 → 建 rooms → 房主写 room_members → 生成小程序码回填
- * @return {Promise<object>} roomId / roomCode / qrFileID
+ * @return {Promise<object>} roomId / roomCode / qrFileID（恒为空串，码由后台异步生成回填）
  */
 exports.main = async () => {
 	const { OPENID } = cloud.getWXContext()
@@ -77,13 +77,18 @@ exports.main = async () => {
 	}
 
 	// 单房间原则：已在进行中的牌局不允许再建房（历史房间已结束的不算）
+	// 活跃成员记录关联的房间一次 in 批量查出（原逐条查询在残留记录多时 N+1 拖慢建房）
 	const activeRes = await db
 		.collection('room_members')
 		.where({ openid: OPENID, leftAt: dbCmd.exists(false) })
 		.get()
-	for (const m of activeRes.data) {
-		const r = await db.collection('rooms').where({ _id: m.roomId }).limit(1).get()
-		if (r.data[0] && r.data[0].status === 'gaming') {
+	const activeIds = [...new Set(activeRes.data.map((m) => m.roomId))]
+	if (activeIds.length) {
+		const roomRes = await db
+			.collection('rooms')
+			.where({ _id: dbCmd.in(activeIds) })
+			.get()
+		if (roomRes.data.some((r) => r.status === 'gaming')) {
 			throw new Error('你已在牌局中，请先结算或退出')
 		}
 	}
@@ -126,11 +131,13 @@ exports.main = async () => {
 		}
 	})
 
-	// 码生成不阻塞建房；fileID 为空串时房间页可另行重试
-	const qrFileID = await _makeQrCode(roomCode)
-	if (qrFileID) {
-		await db.collection('rooms').doc(roomId).update({ data: { qrFileID } })
-	}
+	// 小程序码异步生成：不阻塞建房返回（原 await 生成+上传要 0.5~1.5s，用户全程干等）。
+	// rooms.add 成功后再启动，避免建库失败还白生成码；生成完自行回填 rooms.qrFileID，
+	// 房间页已有的 rooms watcher 会自动把占位符换成真码。极小概率 return 后实例被冻结导致码未生成，
+	// 房间页保留占位，不影响转发/输房号进房
+	void _makeQrCode(roomCode)
+		.then((qrFileID) => qrFileID && db.collection('rooms').doc(roomId).update({ data: { qrFileID } }))
+		.catch((err) => console.error('[createRoom] 二维码异步回填失败:', err))
 
-	return { roomId, roomCode, qrFileID }
+	return { roomId, roomCode, qrFileID: '' }
 }

@@ -175,12 +175,20 @@
 	color: var(--lose);
 }
 
-/* 真实头像图：填满圆形头像位 */
+/* 真实头像图：显式定尺寸（对齐模板上 g-avatar xs/sm 的规格）。
+   勿用 100% 宽高——百分比相对自适应父级无法解析会让头像位塌缩，
+   相对整行解析又会撑成全宽大块挤扁同行文字（home 页 user-card 同款教训） */
 .avatar-img {
 	display: block;
-	width: 100%;
-	height: 100%;
 	border-radius: 50%;
+}
+.plans-card .avatar-img {
+	width: 48rpx;
+	height: 48rpx;
+}
+.stats-card .avatar-img {
+	width: 64rpx;
+	height: 64rpx;
 }
 
 /* 卡片空状态（结算方案/每人输赢无数据时） */

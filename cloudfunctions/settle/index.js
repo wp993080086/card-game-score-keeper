@@ -50,6 +50,13 @@ const _calcSettlement = async (roomId) => {
 		}
 	}
 
+	// 无流水的在场成员兜底 0 分（否则零流水对局结算页"每人累计输赢"空白）
+	for (const m of memRes.data) {
+		if (!m.leftAt && !(m.openid in net)) {
+			net[m.openid] = 0
+		}
+	}
+
 	// 贪心：收款方/付款方按待处理额度降序配对，单笔取小者，清零一方移出
 	const creditors = Object.keys(net)
 		.filter((k) => net[k] > 0)
@@ -113,6 +120,7 @@ const _makeHomeQr = async () => {
  */
 exports.main = async (event) => {
 	const { OPENID } = cloud.getWXContext()
+	const dbCmd = db.command
 	const roomId = String(event.roomId || '')
 	const preview = !!event.preview
 	if (!roomId) {
@@ -174,6 +182,12 @@ exports.main = async (event) => {
 		.collection('rooms')
 		.doc(roomId)
 		.update({ data: { status: 'settled' } })
+
+	// 结算即全员清出：给活跃成员写 leftAt，避免残留活跃记录造成"幽灵牌局"（首页卡片漏判 / 建房进房误拦）
+	await db
+		.collection('room_members')
+		.where({ roomId, leftAt: dbCmd.exists(false) })
+		.update({ data: { leftAt: db.serverDate() } })
 
 	// 结算动态进消息流
 	const mine = netScores.find((s) => s.openid === OPENID)

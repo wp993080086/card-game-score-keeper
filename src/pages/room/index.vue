@@ -10,7 +10,13 @@
 		<view class="members-bar">
 			<view v-for="member in memberList" :key="member.openid" class="m-item" :class="{ owner: member.isOwner }" @click="_onMemberTap(member)">
 				<view class="g-avatar">
-					<image v-if="member.avatarUrl" class="avatar-img" :src="member.avatarUrl" mode="aspectFill" />
+					<image
+						v-if="member.avatarUrl"
+						class="avatar-img"
+						:src="avatarSrc(member.avatarUrl)"
+						mode="aspectFill"
+						@error="onAvatarError(member.avatarUrl)"
+					/>
 					<view v-else :style="avatarStyle(hashColor(member.nickname))">{{ member.nickname.charAt(0) }}</view>
 				</view>
 				<view class="name">{{ member.nickname }}</view>
@@ -43,7 +49,7 @@
 
 				<!-- 聊天气泡 -->
 				<view v-else class="msg-row" :class="{ self: msg.senderOpenid === myOpenid }">
-					<image v-if="msg.avatarUrl" class="g-avatar sm" :src="msg.avatarUrl" mode="aspectFill" />
+					<image v-if="msg.avatarUrl" class="g-avatar sm" :src="avatarSrc(msg.avatarUrl)" mode="aspectFill" @error="onAvatarError(msg.avatarUrl)" />
 					<view v-else class="g-avatar sm" :style="avatarStyle(hashColor(msg.sender))">{{ msg.sender.charAt(0) }}</view>
 					<view class="bubble">{{ msg.content }}</view>
 				</view>
@@ -125,6 +131,8 @@
 import { computed, nextTick, ref } from 'vue'
 import { onLoad, onShareAppMessage, onUnload } from '@dcloudio/uni-app'
 import { transfer } from '@/apis/room'
+import { cloudErrMsg } from '@/apis/cloud'
+import { useAvatarFallback } from '@/utils/avatar'
 
 defineOptions({
 	name: 'Room'
@@ -199,6 +207,9 @@ const roomInfo = ref<TAny | null>(null)
 const myOpenid = ref('')
 const myProfile = ref<{ nickname: string; avatarUrl: string } | null>(null)
 
+/** @description 头像加载失败兜底（失败地址换本地 avatar.png 占位）*/
+const { onAvatarError, avatarSrc } = useAvatarFallback()
+
 /** @description 活跃成员原始文档（room_members watch 快照）*/
 const rawMembers = ref<TAny[]>([])
 
@@ -267,14 +278,10 @@ const transferAmount = ref('')
 /** @description 转账请求进行中（防重复提交）*/
 const transferring = ref(false)
 
-/** @description 提取云开发错误的关键信息用于提示*/
-const _errMsg = (err: TAny): string => {
-	return err?.errMsg || err?.errMessage || err?.message || '未知错误'
-}
-
-/** @description 成员/消息实时监听器（onUnload 关闭）*/
+/** @description 成员/消息/房间实时监听器（onUnload 关闭）*/
 let memberWatcher: { close(): void } | null = null
 let messageWatcher: { close(): void } | null = null
+let roomWatcher: { close(): void } | null = null
 
 /** @description 加载更早消息进行中（防 scrolltoupper 连续触发）*/
 const loadingOlder = ref(false)
@@ -296,12 +303,14 @@ onLoad((options: TAny) => {
 	_fetchSelf()
 	_watchMembers()
 	_watchMessages()
+	_watchRoom()
 })
 
 /** @description 离开页面关闭实时监听*/
 onUnload(() => {
 	memberWatcher?.close()
 	messageWatcher?.close()
+	roomWatcher?.close()
 })
 
 /** @description 拉取房间文档（房主/上限/小程序码 fileID）*/
@@ -351,6 +360,35 @@ const _watchMembers = () => {
 			},
 			onError: (err) => {
 				console.error('[room] 成员实时监听失败:', err)
+			}
+		})
+}
+
+/** @description 监听房间状态：房主结算/解散后，留在房间内的成员立即感知并带离（清栈跳转，避免滞留僵尸房间页）*/
+const _watchRoom = () => {
+	roomWatcher = wx.cloud
+		.database()
+		.collection('rooms')
+		.where({ _id: roomId.value })
+		.watch({
+			onChange: (snapshot) => {
+				const room = snapshot.docs[0]
+				if (!room || room.status === 'gaming') return
+				const settled = room.status === 'settled'
+				uni.showModal({
+					title: settled ? '本局已结算' : '房间已解散',
+					content: settled ? '去看看对局战绩' : '房主已解散房间',
+					showCancel: false,
+					confirmText: settled ? '看战绩' : '知道了',
+					success: () => {
+						uni.reLaunch({
+							url: settled ? `/pages/settlement/index?roomId=${roomId.value}&roomCode=${roomCode.value}` : '/pages/home/index'
+						})
+					}
+				})
+			},
+			onError: (err) => {
+				console.error('[room] 房间状态监听失败:', err)
 			}
 		})
 }
@@ -456,7 +494,7 @@ const _confirmTransfer = () => {
 		.catch((err) => {
 			// 开发期把真实错误亮出来，便于定位（不在场/已结束/权限等问题）
 			console.error('[room] 转账失败:', err)
-			uni.showToast({ title: `转账失败：${_errMsg(err)}`, icon: 'none' })
+			uni.showToast({ title: `转账失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
 			transferring.value = false
@@ -502,7 +540,7 @@ const _sendPhrase = (phrase: string) => {
 		})
 		.catch((err) => {
 			console.error('[room] 发送快捷语句失败:', err)
-			uni.showToast({ title: `发送失败：${_errMsg(err)}`, icon: 'none' })
+			uni.showToast({ title: `发送失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 }
 
@@ -521,7 +559,7 @@ onShareAppMessage(() => {
 	return {
 		title: `来打牌，房号 ${roomCode.value}`,
 		path: `/pages/home/index?roomCode=${roomCode.value}`,
-		imageUrl: '/static/share-cover.png'
+		imageUrl: '/static/share-cover.jpg'
 	}
 })
 </script>

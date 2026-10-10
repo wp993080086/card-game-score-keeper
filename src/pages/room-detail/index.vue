@@ -33,7 +33,13 @@
 			<view class="section-title">结算方案</view>
 			<view class="plans-card">
 				<view v-for="plan in planList" :key="`${plan.fromOpenid}-${plan.toOpenid}`" class="plan-item">
-					<image v-if="plan.fromAvatarUrl" class="g-avatar xs avatar-img" :src="plan.fromAvatarUrl" mode="aspectFill" />
+					<image
+						v-if="plan.fromAvatarUrl"
+						class="g-avatar xs avatar-img"
+						:src="avatarSrc(plan.fromAvatarUrl)"
+						mode="aspectFill"
+						@error="onAvatarError(plan.fromAvatarUrl)"
+					/>
 					<view v-else class="g-avatar xs" :style="avatarStyle(hashColor(plan.from))">{{ plan.from.charAt(0) }}</view>
 					<view class="from">{{ plan.from }}</view>
 					<view class="arrow">→</view>
@@ -50,7 +56,13 @@
 			<view class="section-title">每人累计输赢</view>
 			<view class="stats-card">
 				<view v-for="stat in netScores" :key="stat.openid" class="stat-row">
-					<image v-if="stat.avatarUrl" class="g-avatar sm avatar-img" :src="stat.avatarUrl" mode="aspectFill" />
+					<image
+						v-if="stat.avatarUrl"
+						class="g-avatar sm avatar-img"
+						:src="avatarSrc(stat.avatarUrl)"
+						mode="aspectFill"
+						@error="onAvatarError(stat.avatarUrl)"
+					/>
 					<view v-else class="g-avatar sm" :style="avatarStyle(hashColor(stat.name))">{{ stat.name.charAt(0) }}</view>
 					<view class="name">{{ stat.name }}</view>
 					<view class="val" :class="stat.net >= 0 ? 'win' : 'lose'">{{ formatNet(stat.net) }}</view>
@@ -67,6 +79,12 @@
 				<text>📋 查看流水明细</text>
 				<text class="arrow">›</text>
 			</view>
+
+			<!-- reLaunch 清栈进入（结算完成后跳转）时无上一页、原生返回键不可用，页内提供回首页入口 -->
+			<view v-if="isStackRoot" class="flow-entry" @click="_goHome">
+				<text>🏠 回到首页</text>
+				<text class="arrow">›</text>
+			</view>
 		</template>
 	</view>
 </template>
@@ -75,6 +93,8 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { settle } from '@/apis/room'
+import { cloudErrMsg } from '@/apis/cloud'
+import { useAvatarFallback } from '@/utils/avatar'
 
 defineOptions({
 	name: 'RoomDetail'
@@ -111,6 +131,9 @@ const AVATAR_PRESET: TDict<I_Avatar> = {
 	lose: { bg: 'var(--lose-soft)', color: 'var(--lose-text)' },
 	green: { bg: '#e8f7ee', color: '#34a35b' }
 }
+
+/** @description 头像加载失败兜底（失败地址换本地 avatar.png 占位）*/
+const { onAvatarError, avatarSrc } = useAvatarFallback()
 
 /** @description 配色轮转顺序*/
 const AVATAR_KEYS = ['default', 'win', 'lose', 'green']
@@ -173,8 +196,12 @@ const myNet = computed(() => netScores.value.find((s) => s.openid === myOpenid.v
 /** @description 房间 id 缺失（进入来源未携带参数，如战绩列表占位数据）*/
 const missingRoom = ref(false)
 
+/** @description 是否页面栈根（reLaunch 清栈进入时无上一页，原生返回键不可用，需展示页内回首页入口）*/
+const isStackRoot = ref(false)
+
 /** @description 接收页面参数并拉取结算快照（缺 roomId 时不请求，直接展示空状态）*/
 onLoad((options: TAny) => {
+	isStackRoot.value = getCurrentPages().length <= 1
 	roomId.value = options?.roomId || ''
 	roomCode.value = options?.roomCode || ''
 	if (!roomId.value) {
@@ -195,6 +222,11 @@ const _goBack = () => {
 /** @description 查看本房间流水明细*/
 const _goFlow = () => {
 	uni.navigateTo({ url: `/pages/flow/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
+}
+
+/** @description 回到首页（栈根状态下使用，reLaunch 清栈保证首页为新实例、无旧数据残影）*/
+const _goHome = () => {
+	uni.reLaunch({ url: '/pages/home/index' })
 }
 
 /** @description 拉取自己资料（依赖 users「仅创建者可读写」权限：get 过滤后只返回自己的记录）*/
@@ -243,7 +275,7 @@ const _fetchSettlement = () => {
 		})
 		.catch((err) => {
 			console.error('[room-detail] 结算数据加载失败:', err)
-			uni.showToast({ title: `对局详情加载失败：${err?.errMsg || err?.errMessage || err?.message || '未知错误'}`, icon: 'none' })
+			uni.showToast({ title: `对局详情加载失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 }
 </script>

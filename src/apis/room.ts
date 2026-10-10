@@ -88,3 +88,19 @@ export function settle(roomId: string, preview: boolean): Promise<I_SettleResult
 export function leaveRoom(roomId: string): Promise<{ left: boolean; dissolved: boolean }> {
 	return callCloud<{ left: boolean; dissolved: boolean }>('leaveRoom', { roomId })
 }
+
+/** @description getOngoingRoom 返回的进行中牌局（首页卡片数据源） */
+export interface I_OngoingRoom {
+	roomId: string
+	roomCode: string
+	/** 活跃成员列表（按加入顺序） */
+	members: { openid: string; nickname: string; avatarUrl: string }[]
+}
+
+/**
+ * @description 查询我的进行中牌局（与 createRoom 单房间拦截逻辑同源，云函数端不受集合权限过滤）
+ * @return 无进行中房间时 room 为 null
+ */
+export function getOngoingRoom(): Promise<{ room: I_OngoingRoom | null }> {
+	return callCloud<{ room: I_OngoingRoom | null }>('getOngoingRoom')
+}

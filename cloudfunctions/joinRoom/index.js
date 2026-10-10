@@ -14,6 +14,7 @@ const db = cloud.database()
  */
 exports.main = async (event) => {
 	const { OPENID } = cloud.getWXContext()
+	const dbCmd = db.command
 	const roomCode = String(event.roomCode || '')
 		.trim()
 		.toUpperCase()
@@ -48,22 +49,23 @@ exports.main = async (event) => {
 	}
 
 	// 单房间原则：已在其他进行中的牌局不允许再进房
+	// 排除当前房后关联房间一次 in 批量查出（原逐条查询在残留记录多时 N+1 拖慢进房）
 	const activeRes = await db
 		.collection('room_members')
 		.where({ openid: OPENID, leftAt: dbCmd.exists(false) })
 		.get()
-	for (const m of activeRes.data) {
-		if (m.roomId === room._id) {
-			continue
-		}
-		const r = await db.collection('rooms').where({ _id: m.roomId }).limit(1).get()
-		if (r.data[0] && r.data[0].status === 'gaming') {
+	const otherIds = [...new Set(activeRes.data.map((m) => m.roomId).filter((id) => id !== room._id))]
+	if (otherIds.length) {
+		const roomRes = await db
+			.collection('rooms')
+			.where({ _id: dbCmd.in(otherIds) })
+			.get()
+		if (roomRes.data.some((r) => r.status === 'gaming')) {
 			throw new Error('你已在其他牌局中，请先退出')
 		}
 	}
 
 	// 满员校验：活跃成员（无 leftAt）达上限则拒绝
-	const dbCmd = db.command
 	const cntRes = await db
 		.collection('room_members')
 		.where({ roomId: room._id, leftAt: dbCmd.exists(false) })

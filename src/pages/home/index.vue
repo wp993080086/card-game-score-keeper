@@ -3,7 +3,13 @@
 		<view class="home-page">
 			<!-- 用户卡（整卡可点：打开完善资料弹窗） -->
 			<view class="user-card" @click="_openProfile">
-				<image v-if="userInfo?.avatarUrl" class="g-avatar lg avatar-img" :src="userInfo.avatarUrl" mode="aspectFill" />
+				<image
+					v-if="userInfo?.avatarUrl"
+					class="g-avatar lg avatar-img"
+					:src="avatarSrc(userInfo.avatarUrl)"
+					mode="aspectFill"
+					@error="onAvatarError(userInfo.avatarUrl)"
+				/>
 				<view v-else class="g-avatar lg" :style="avatarStyle(AVATAR_PRESET.default)">
 					{{ avatarText }}
 				</view>
@@ -22,7 +28,13 @@
 				<view class="room-id">{{ ongoingRoom.code }}</view>
 				<view class="members">
 					<view v-for="member in ongoingRoom.members" :key="member.openid" class="g-avatar sm">
-						<image v-if="member.avatarUrl" class="avatar-img" :src="member.avatarUrl" mode="aspectFill" />
+						<image
+							v-if="member.avatarUrl"
+							class="avatar-img"
+							:src="avatarSrc(member.avatarUrl)"
+							mode="aspectFill"
+							@error="onAvatarError(member.avatarUrl)"
+						/>
 						<view v-else :style="avatarStyle(hashColor(member.nickname))">{{ member.nickname.charAt(0) }}</view>
 					</view>
 				</view>
@@ -36,6 +48,7 @@
 			<view class="actions">
 				<button class="btn primary" @click="_createRoom">+ 创建房间</button>
 				<button class="btn outline" @click="_scanJoin">扫码进房</button>
+				<button class="btn outline" @click="_inputJoin">输房号进房</button>
 			</view>
 
 			<!-- 快捷入口 -->
@@ -77,11 +90,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import SafePageWrapper from '@/components/SafePageWrapper.vue'
 import { fetchUserProfile, saveUserProfile, uploadAvatar } from '@/apis/user'
 import type { I_UserProfile } from '@/apis/user'
-import { createRoom, joinRoom } from '@/apis/room'
+import { createRoom, joinRoom, getOngoingRoom } from '@/apis/room'
+import { cloudErrMsg } from '@/apis/cloud'
+import { useAvatarFallback } from '@/utils/avatar'
 
 defineOptions({
 	name: 'Home'
@@ -133,6 +148,9 @@ const avatarStyle = (avatar: I_Avatar): string => {
 /** @description 当前用户资料（users 集合，用户主动完善过才有记录；null 表示未完善）*/
 const userInfo = ref<I_UserProfile | null>(null)
 
+/** @description 头像加载失败兜底（失败地址换本地 avatar.png 占位）*/
+const { onAvatarError, avatarSrc } = useAvatarFallback()
+
 /** @description 默认昵称（时间戳 36 进制尾部 4 位：唯一且简短；进页面时固定一次，完善资料后即不再展示）*/
 const defaultNickname = `牌友${Date.now().toString(36).slice(-4)}`
 
@@ -144,6 +162,17 @@ const avatarText = computed(() => userInfo.value?.nickname?.charAt(0) || '牌')
 
 /** @description 进行中的牌局（room_members/rooms 实查，null 表示无进行中房间）*/
 const ongoingRoom = ref<I_OngoingRoom | null>(null)
+
+/** @description 结算完成事件：清掉本房间的进行中卡片（结算页发出；首页实例常驻，靠它即时清卡不等 onShow 拉取）*/
+const _onRoomSettled = (settledRoomId: string) => {
+	if (ongoingRoom.value?.roomId === settledRoomId) {
+		ongoingRoom.value = null
+	}
+}
+uni.$on('room:settled', _onRoomSettled)
+onUnload(() => {
+	uni.$off('room:settled', _onRoomSettled)
+})
 
 /** @description 资料弹窗显隐*/
 const showProfile = ref(false)
@@ -162,11 +191,6 @@ const saving = ref(false)
 
 /** @description users 集合当前记录 id（有则更新、无则新增）*/
 let userDocId = ''
-
-/** @description 提取云开发错误的关键信息用于提示*/
-const _errMsg = (err: TAny): string => {
-	return err?.errMsg || err?.errMessage || err?.message || '未知错误'
-}
 
 /** @description 资料完善后待续跑的动作（建房/进房）*/
 let pendingAction: (() => void) | null = null
@@ -188,19 +212,17 @@ onLoad((options: TAny) => {
 
 /** @description 进入页面拉取资料与进行中房间（不自动弹窗；未完善时用户卡展示默认资料，进房前才引导完善）*/
 onShow(() => {
+	// 资料与进行中房间并行拉取（互不依赖，串行要等两次云函数来回）。卡片不再依赖资料是否存在：
+	// 未完善资料的用户进不了房、服务端必返回 null，多查一次无害
+	ongoingReady = _fetchOngoingRoom()
 	fetchUserProfile()
 		.then((profile) => {
 			userDocId = profile?._id || ''
 			userInfo.value = profile
-			if (profile) {
-				_fetchOngoingRoom(profile)
-			} else {
-				ongoingRoom.value = null
-			}
 		})
 		.catch((err) => {
 			// 拉取失败不阻断浏览；错误打日志便于排查
-			console.error('[home] 拉取用户资料失败:', _errMsg(err))
+			console.error('[home] 拉取用户资料失败:', cloudErrMsg(err))
 		})
 		.finally(() => {
 			// 资料（或失败结果）就绪后再进房，避免 onShow 拉取期间误弹完善资料窗
@@ -212,52 +234,26 @@ onShow(() => {
 		})
 })
 
-/** @description 拉取进行中的牌局：自己的活跃成员记录 → 房间 status=gaming 才展示 → 活跃成员列表；无/已结束则清空卡片*/
-const _fetchOngoingRoom = (profile: I_UserProfile) => {
-	const db = wx.cloud.database()
-	const dbCmd = db.command
-	db.collection('room_members')
-		.where({ openid: profile._openid || '', leftAt: dbCmd.exists(false) })
-		.orderBy('joinedAt', 'desc')
-		.limit(1)
-		.get()
+/** @description 进行中房间查询完成信号（onShow 存住，建房前 await 落地，消除拉取期间的点击竞态）*/
+let ongoingReady: Promise<void> = Promise.resolve()
+
+/** @description 拉取进行中的牌局：走云函数（与 createRoom 单房间拦截同源），避免直连查询受集合权限过滤（房间/成员记录均由云函数写入、无 _openid 字段，直连可能查不到导致卡片永不显示）*/
+const _fetchOngoingRoom = () => {
+	return getOngoingRoom()
 		.then((res) => {
-			const mine = res.data[0]
-			if (!mine) {
-				ongoingRoom.value = null
-				return
-			}
-			return db
-				.collection('rooms')
-				.doc(mine.roomId)
-				.get()
-				.then((roomRes) => {
-					const room = roomRes.data
-					if (!room || room.status !== 'gaming') {
-						ongoingRoom.value = null
-						return
+			ongoingRoom.value = res.room
+				? {
+						roomId: res.room.roomId,
+						code: res.room.roomCode,
+						members: res.room.members
 					}
-					return db
-						.collection('room_members')
-						.where({ roomId: mine.roomId, leftAt: dbCmd.exists(false) })
-						.orderBy('joinedAt', 'asc')
-						.get()
-						.then((memRes) => {
-							ongoingRoom.value = {
-								roomId: mine.roomId,
-								code: room.roomCode || '',
-								members: memRes.data.map((m) => ({
-									openid: m.openid || '',
-									nickname: m.nickname || '',
-									avatarUrl: m.avatarUrl || ''
-								}))
-							}
-						})
-				})
+				: null
 		})
 		.catch((err) => {
-			console.error('[home] 拉取进行中房间失败:', err)
+			// 拉取失败不阻断浏览；开发期把错误亮出来（云函数未部署/报错时静默置空会导致"无卡片但被拦"难排查）
+			console.error('[home] 拉取进行中房间失败:', cloudErrMsg(err))
 			ongoingRoom.value = null
+			uni.showToast({ title: `牌局查询失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 }
 
@@ -325,7 +321,7 @@ const _saveProfile = () => {
 		.catch((err) => {
 			// 开发期把真实错误亮出来，便于定位（权限/上传/环境等问题）
 			console.error('[home] 保存资料失败:', err)
-			uni.showToast({ title: `保存失败：${_errMsg(err)}`, icon: 'none' })
+			uni.showToast({ title: `保存失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
 			saving.value = false
@@ -364,7 +360,7 @@ const _joinByCode = (roomCode: string) => {
 				// 开发期把真实错误亮出来，便于定位（房间不存在/已满/权限等问题）
 				console.error('[home] 进房失败:', err)
 				uni.hideLoading()
-				uni.showToast({ title: `进房失败：${_errMsg(err)}`, icon: 'none' })
+				uni.showToast({ title: `进房失败：${cloudErrMsg(err)}`, icon: 'none' })
 			})
 			.finally(() => {
 				joining.value = false
@@ -374,14 +370,16 @@ const _joinByCode = (roomCode: string) => {
 
 /** @description 创建房间：云函数分配短码建档 → 携带 roomId/roomCode 进房间页；未完善资料先引导完善*/
 const _createRoom = () => {
-	// 已在进行中的牌局：直接提示不发请求（云函数同样有拦截兜底）
-	if (ongoingRoom.value) {
-		uni.showToast({ title: '你已在牌局中，请先结算或退出', icon: 'none' })
-		return
-	}
-	_ensureProfileThen(() => {
+	_ensureProfileThen(async () => {
 		if (creating.value) return
 		creating.value = true
+		// 先等 onShow 的进行中房间查询落地再判断，避免拉取期间误放行（云函数同样有拦截兜底）
+		await ongoingReady
+		if (ongoingRoom.value) {
+			creating.value = false
+			uni.showToast({ title: '你已在牌局中，请先结算或退出', icon: 'none' })
+			return
+		}
 		uni.showLoading({ title: '创建中…', mask: true })
 		createRoom()
 			.then((res) => {
@@ -392,7 +390,7 @@ const _createRoom = () => {
 				// 开发期把真实错误亮出来，便于定位（云函数/权限/环境等问题）
 				console.error('[home] 创建房间失败:', err)
 				uni.hideLoading()
-				uni.showToast({ title: `创建失败：${_errMsg(err)}`, icon: 'none' })
+				uni.showToast({ title: `创建失败：${cloudErrMsg(err)}`, icon: 'none' })
 			})
 			.finally(() => {
 				creating.value = false
@@ -404,10 +402,13 @@ const _createRoom = () => {
 const _scanJoin = () => {
 	uni.scanCode({
 		success: (res: TAny) => {
-			const match = /scene=([^&]+)/.exec(res.path || '')
+			// 开发期打出原始扫码结果，便于定位工具/真机对小程序码的 path/result 格式差异
+			console.log('[home] 扫码原始结果 path:', res.path, 'result:', res.result)
+			const match = /(?:scene|roomCode)=([^&]+)/.exec(res.path || '')
 			const roomCode = match ? decodeURIComponent(match[1]) : res.result
 			if (!roomCode) {
-				uni.showToast({ title: '未识别到房号', icon: 'none' })
+				// 提示带上原始值：扫到非小程序码（普通二维码/截图）时能直接看出内容
+				uni.showToast({ title: `未识别到房号：${res.path || res.result || '空'}`, icon: 'none' })
 				return
 			}
 			_joinByCode(String(roomCode).toUpperCase())
@@ -415,6 +416,29 @@ const _scanJoin = () => {
 		fail: () => {
 			uni.showToast({ title: '已取消扫码', icon: 'none' })
 		}
+	})
+}
+
+/** @description 手动输房号进房（面对面抄码 / 小程序内扫小程序码拿不到 scene 时的兜底）*/
+const _inputJoin = () => {
+	_ensureProfileThen(() => {
+		uni.showModal({
+			title: '输入房号',
+			editable: true,
+			placeholderText: '4 位房号，如 9ETJ',
+			success: (res: TAny) => {
+				if (!res.confirm) return
+				const code = String(res.content || '')
+					.trim()
+					.toUpperCase()
+				// 与冷启动解析同款校验（4 位去易混淆字符集），格式错直接提示不发请求
+				if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/.test(code)) {
+					uni.showToast({ title: '房号格式不正确', icon: 'none' })
+					return
+				}
+				_joinByCode(code)
+			}
+		})
 	})
 }
 

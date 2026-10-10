@@ -32,16 +32,17 @@ const _fetchAll = async (name, where) => {
 }
 
 /**
- * @description 按 roomId 分批 in 查询取全记录（in 条目过多时拆批）
+ * @description 按房间 id 分批 in 查询取全记录（in 条目过多时拆批）
  * @param {string} name 集合名
  * @param {string[]} ids 房间 id 列表
  * @param {object} [extra] 附加查询条件
+ * @param {string} [field] id 匹配字段名（rooms 集合主键是 _id，成员/快照/流水集合用 roomId）
  * @return {Promise<object[]>} 全部记录
  */
-const _fetchByRoomIds = async (name, ids, extra) => {
+const _fetchByRoomIds = async (name, ids, extra, field = 'roomId') => {
 	const all = []
 	for (let i = 0; i < ids.length; i += IN_BATCH) {
-		const where = Object.assign({ roomId: _.in(ids.slice(i, i + IN_BATCH)) }, extra || {})
+		const where = Object.assign({ [field]: _.in(ids.slice(i, i + IN_BATCH)) }, extra || {})
 		const batch = await _fetchAll(name, where)
 		all.push(...batch)
 	}
@@ -77,8 +78,8 @@ exports.main = async () => {
 		return { games: [] }
 	}
 
-	// 只统计已结算对局（打牌中/已解散不进战绩）
-	const settledRooms = await _fetchByRoomIds('rooms', roomIds, { status: 'settled' })
+	// 只统计已结算对局（打牌中/已解散不进战绩）；rooms 主键是 _id，匹配字段需显式指定
+	const settledRooms = await _fetchByRoomIds('rooms', roomIds, { status: 'settled' }, '_id')
 	if (!settledRooms.length) {
 		return { games: [] }
 	}
