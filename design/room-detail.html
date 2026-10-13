@@ -34,8 +34,8 @@
     font-size: 22px; font-weight: 700; margin-top: 2px;
     font-feature-settings: 'tnum';
   }
-  .head-info .my-net .val.win { color: var(--win); }
-  .head-info .my-net .val.lose { color: var(--lose); }
+  .head-info .my-net .val.win { color: var(--up); }
+  .head-info .my-net .val.lose { color: var(--down); }
 
   .head-info .summary-row {
     display: flex; align-items: center; gap: 8px;
@@ -84,8 +84,8 @@
     font-size: 15px; font-weight: 700;
     font-feature-settings: 'tnum';
   }
-  .stat-row .val.win { color: var(--win); }
-  .stat-row .val.lose { color: var(--lose); }
+  .stat-row .val.win { color: var(--up); }
+  .stat-row .val.lose { color: var(--down); }
 
   /* 结算方案：第二顺序 */
   .plans-card {
@@ -100,10 +100,10 @@
     padding: 12px 16px;
     border-bottom: 1px solid var(--divider);
     font-size: 14px;
-    gap: 8px;
+    gap: 12px;
   }
   .plans-card .plan-item:last-child { border-bottom: none; }
-  .plans-card .avatar { width: 28px; height: 28px; font-size: 12px; flex-shrink: 0; }
+  .plans-card .avatar { width: 32px; height: 32px; font-size: 13px; flex-shrink: 0; }
   .plans-card .from, .plans-card .to {
     font-weight: 500; flex: 1;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -113,6 +113,27 @@
   .plans-card .amount {
     font-weight: 600; color: var(--lose-text);
     flex-shrink: 0;
+  }
+
+  /* 底部操作入口：2×2（未结算时战绩图两钮隐藏，流水+返回各半） */
+  .entry-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--divider);
+    padding: 12px 16px;
+    display: flex; flex-wrap: wrap; gap: 12px;
+  }
+  .entry-bar .entry-btn {
+    flex: 1 1 calc(50% - 12px);
+    height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 12px;
+    font-size: 16px; font-weight: 600;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    background: transparent;
+    cursor: pointer;
   }
 </style>
 </head>
@@ -133,8 +154,8 @@
       <div class="action">⋯</div>
     </div>
 
-    <div class="screen no-tabbar">
-      <div class="scroll">
+    <div class="screen no-tabbar" style="position:relative">
+      <div class="scroll" style="padding-bottom:132px">
         <div class="head-info">
           <div class="top">
             <div>
@@ -204,6 +225,14 @@
             <div class="val lose">-90</div>
           </div>
         </div>
+      </div>
+
+      <!-- 底部操作入口（已结算状态：4 钮 2×2） -->
+      <div class="entry-bar">
+        <div class="entry-btn">📥 保存战绩图</div>
+        <div class="entry-btn">📤 分享战绩图</div>
+        <div class="entry-btn">📋 查看流水明细</div>
+        <div class="entry-btn">🏠 回到首页</div>
       </div>
     </div>
   </div>

@@ -14,6 +14,10 @@
 	--lose-soft: #fff1ed;
 	--lose-text: #d63a3a;
 
+	/* 净额数值（国内习惯：正数红、负数绿，红涨绿跌） */
+	--up: #e64340;
+	--down: #34a35b;
+
 	--bg: #ffffff;
 	--bg-2: #f7f8fa;
 	--bg-3: #f0f1f4;
@@ -355,11 +359,11 @@ body {
 	color: var(--text-3);
 }
 .text-win {
-	color: var(--win);
+	color: var(--up);
 	font-weight: 600;
 }
 .text-lose {
-	color: var(--lose);
+	color: var(--down);
 	font-weight: 600;
 }
 .text-primary {

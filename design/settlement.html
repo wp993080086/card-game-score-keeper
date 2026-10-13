@@ -37,7 +37,7 @@
     display: flex; align-items: baseline; gap: 4px;
   }
   .mvp .earnings .label { font-size: 12px; color: var(--text-2); }
-  .mvp .earnings .amount { font-size: 22px; font-weight: 700; color: var(--win); }
+  .mvp .earnings .amount { font-size: 22px; font-weight: 700; color: var(--up); }
 
   .section-title {
     font-size: 14px; font-weight: 600; color: var(--text-1);
@@ -47,18 +47,20 @@
   .plans {
     background: var(--bg);
     border-radius: 12px;
+    padding: 4px 0;
     box-shadow: var(--shadow-card);
     overflow: hidden;
   }
+  /* 行样式复刻对局详情「每人累计输赢」stat-row */
   .plan-item {
     display: flex; align-items: center;
-    padding: 14px 0;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--divider);
-    gap: 8px;
+    gap: 12px;
   }
   .plan-item:last-child { border-bottom: none; }
   .plan-item .avatar {
-    width: 28px; height: 28px; font-size: 12px;
+    width: 32px; height: 32px; font-size: 13px;
     flex-shrink: 0;
   }
   .plan-item .from {
@@ -76,11 +78,10 @@
     font-size: 15px; font-weight: 700;
     color: var(--lose-text);
     flex-shrink: 0;
-    padding-left: 8px;
   }
 
-  .grid-2 {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  .grid-3 {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
   }
   .action-card {
     background: var(--bg);
@@ -134,7 +135,7 @@
             <div class="avatar lg win-bg">张</div>
           </div>
           <div class="earnings">
-            <span class="label">MVP 收益</span>
+            <span class="label">张三 MVP</span>
             <span class="amount">+200 分</span>
           </div>
         </div>
@@ -167,11 +168,7 @@
 
         <!-- 功能区 -->
         <div class="section-title">更多</div>
-        <div class="grid-2">
-          <div class="action-card">
-            <div class="ico-wrap" style="background:#fff3e8">🏆</div>
-            <div class="label">排行榜</div>
-          </div>
+        <div class="grid-3">
           <div class="action-card">
             <div class="ico-wrap" style="background:#e8f5e9">📋</div>
             <div class="label">流水明细</div>
@@ -188,8 +185,7 @@
       </div>
 
       <div class="share-bar">
-        <button class="btn outline">📤 分享战绩图</button>
-        <button class="btn primary">确认结算</button>
+        <button class="btn primary block">确认结算</button>
       </div>
     </div>
   </div>
