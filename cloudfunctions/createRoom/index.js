@@ -1,6 +1,7 @@
 'use strict'
 
 const cloud = require('wx-server-sdk')
+const QRCode = require('qrcode')
 
 // 按部署环境动态初始化，避免环境 ID 硬编码在云函数侧
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -12,6 +13,13 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
 /** 撞码最大重试次数（仅与进行中房间判重，历史房码可复用） */
 const MAX_RETRY = 5
+
+/**
+ * 房间码二维码内容：纯文本提示（外部微信扫一扫直接看到提示与房号，不用 URL 即无需域名）。
+ * 站内 wx.scanCode 扫普通二维码可靠读出该文本，前端首页按「房号：XXXX」解析进房
+ * （小程序码真机部分机型拿不到内容，平台限制，故房间码不用小程序码）
+ */
+const _qrJoinText = (roomCode) => `请在小程序内点击「扫码进房」加入牌局，房号：${roomCode}`
 
 /** @description 生成 4 位随机短码 */
 const _randomCode = () => {
@@ -38,25 +46,21 @@ const _pickCode = async () => {
 }
 
 /**
- * @description 生成房间小程序码并存云存储（scene=roomCode，扫码进首页后解析进房）
+ * @description 生成房间码普通二维码并存云存储（内容为提示文本+房号，站内扫码解析进房）
  * @param {string} roomCode 房间短码
  * @return {Promise<string>} 码文件 fileID，失败返回空串（不阻塞建房）
  */
 const _makeQrCode = async (roomCode) => {
 	try {
-		const res = await cloud.openapi.wxacode.getUnlimited({
-			scene: roomCode,
-			// 开发阶段页面未发布，跳过路径校验；不传 page 默认进首页
-			checkPath: false
-		})
+		const buffer = await QRCode.toBuffer(_qrJoinText(roomCode), { width: 600, margin: 2 })
 		const { fileID } = await cloud.uploadFile({
 			cloudPath: `qrcodes/rooms/${roomCode}-${Date.now()}.png`,
-			fileContent: res.buffer
+			fileContent: buffer
 		})
 		return fileID
 	} catch (err) {
 		// 码生成失败不影响建房，房间页需要时另行重试
-		console.error('[createRoom] 小程序码生成失败:', err)
+		console.error('[createRoom] 房间码生成失败:', err)
 		return ''
 	}
 }

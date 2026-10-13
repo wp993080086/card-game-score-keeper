@@ -28,6 +28,21 @@ export function fetchUserProfile(): Promise<I_UserProfile | null> {
 }
 
 /**
+ * @description 内容安全检测（云函数 checkContent，提审声明的平台内容安全 API）
+ *  - 违规时云函数抛错（errcode 87014 内容违规），直接把错误透传给调用方
+ * @param action 'text' 检测文本（昵称）| 'image' 检测图片（头像）
+ * @param payload text 传 content，image 传 fileID（云存储 fileID）
+ */
+export function checkContent(action: 'text' | 'image', payload: { content?: string; fileID?: string }): Promise<{ ok: boolean }> {
+	return wx.cloud
+		.callFunction({
+			name: 'checkContent',
+			data: { action, ...payload }
+		})
+		.then((res) => res.result as { ok: boolean })
+}
+
+/**
  * @description 上传头像图片到云存储
  * @param filePath 本地临时文件路径（chooseAvatar 返回）
  * @return 云存储 fileID
@@ -40,6 +55,17 @@ export function uploadAvatar(filePath: string): Promise<string> {
 			filePath
 		})
 		.then((res) => res.fileID)
+		.then(async (fileID) => {
+			try {
+				// 上传后立刻过图片安全检测（imgSecCheck），不让违规图入库
+				await checkContent('image', { fileID })
+				return fileID
+			} catch (err) {
+				// 检测违规/报错时清掉刚传的文件再抛错
+				await wx.cloud.deleteFile({ fileList: [fileID] }).catch(() => {})
+				throw err
+			}
+		})
 }
 
 /**

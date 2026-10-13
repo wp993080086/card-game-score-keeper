@@ -119,15 +119,33 @@
 .tap-hint {
 	display: flex;
 	align-items: center;
-	gap: 8rpx;
 	padding: 0 32rpx;
 	height: 54rpx;
 	font-size: 22rpx;
 	color: var(--text-3);
 	line-height: 1.4;
 }
-.tap-hint .ico {
-	color: var(--primary);
+/* 轮播视口：固定高度裁切，轨道整体左滑 */
+.tap-hint .hint-viewport {
+	flex: 1;
+	overflow: hidden;
+	height: 100%;
+	display: flex;
+	align-items: center;
+}
+.tap-hint .hint-track {
+	display: flex;
+	width: 100%;
+}
+.tap-hint .hint-track.animated {
+	transition: transform 1s ease;
+}
+.tap-hint .hint-slide {
+	flex: 0 0 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-align: center;
 }
 
 /* 消息流 */
@@ -245,12 +263,12 @@
 	position: absolute;
 	top: 24rpx;
 	right: 24rpx;
-	width: 48rpx;
-	height: 48rpx;
+	width: 72rpx;
+	height: 72rpx;
 	border-radius: 50%;
-	background: var(--bg-2);
+	background: #e5e6eb;
 	@include flex_center;
-	font-size: 28rpx;
+	font-size: 42rpx;
 	color: var(--text-3);
 }
 .popup .head {

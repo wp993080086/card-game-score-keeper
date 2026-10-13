@@ -22,13 +22,13 @@
 	color: #ffffff;
 }
 
-/* 输赢文字色 */
+/* 输赢文字色（国内习惯：正数红、负数绿） */
 .text-win {
-	color: var(--win);
+	color: var(--up);
 	font-weight: 600;
 }
 .text-lose {
-	color: var(--lose);
+	color: var(--down);
 	font-weight: 600;
 }
 
@@ -53,10 +53,10 @@
 	color: var(--text-1);
 }
 .summary .stat.win .num {
-	color: var(--win);
+	color: var(--up);
 }
 .summary .stat.lose .num {
-	color: var(--lose);
+	color: var(--down);
 }
 .summary .stat .label {
 	font-size: 24rpx;
@@ -127,6 +127,75 @@
 .record-item .arrow {
 	color: var(--text-4);
 	font-size: 32rpx;
+}
+
+/* 骨架屏（首次加载中，对齐真实布局：统计卡片 + 分组标题 + 列表） */
+.sk-summary {
+	justify-content: space-around;
+	animation: sk-breath 1.2s ease-in-out infinite alternate;
+}
+.sk-stat {
+	width: 140rpx;
+	height: 64rpx;
+	border-radius: 12rpx;
+	background: #d6e0f5;
+}
+.sk-group-title {
+	height: 28rpx;
+	width: 120rpx;
+	border-radius: 8rpx;
+	background: var(--bg-3);
+	margin: 32rpx 32rpx 16rpx;
+	animation: sk-breath 1.2s ease-in-out infinite alternate;
+}
+.sk-list {
+	animation: sk-breath 1.2s ease-in-out infinite alternate;
+}
+.sk-row {
+	display: flex;
+	align-items: center;
+	gap: 24rpx;
+	padding: 28rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
+}
+.sk-row:last-child {
+	border-bottom: none;
+}
+.sk-avatar {
+	width: 80rpx;
+	height: 80rpx;
+	border-radius: 50%;
+	background: var(--bg-3);
+	flex-shrink: 0;
+}
+.sk-meta {
+	flex: 1;
+}
+.sk-line {
+	height: 28rpx;
+	border-radius: 8rpx;
+	background: var(--bg-3);
+}
+.sk-line.w40 {
+	width: 40%;
+}
+.sk-line.w70 {
+	width: 70%;
+	margin-top: 16rpx;
+}
+.sk-amount {
+	width: 96rpx;
+	height: 32rpx;
+	border-radius: 8rpx;
+	background: var(--bg-3);
+}
+@keyframes sk-breath {
+	from {
+		opacity: 0.55;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 /* 空状态 */

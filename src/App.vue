@@ -40,6 +40,10 @@ page {
 	--lose-soft: #fff1ed;
 	--lose-text: #d63a3a;
 
+	/* 净额数值（国内习惯：正数红、负数绿，红涨绿跌） */
+	--up: #e64340;
+	--down: #34a35b;
+
 	/* 背景与文字 */
 	--bg: #ffffff;
 	--bg-2: #f7f8fa;
@@ -68,7 +72,7 @@ page {
 	font-feature-settings: 'tnum';
 }
 
-/* 通用头像（对齐 design/common.css 的 .avatar） */
+/* 通用头像（对齐 design/common.css 的 .avatar）；默认浅灰底：图片未加载/加载失败时不与页面背景融为一体 */
 .g-avatar {
 	@include flex_center;
 	width: 80rpx;
@@ -78,6 +82,7 @@ page {
 	font-weight: 600;
 	flex-shrink: 0;
 	overflow: hidden;
+	background: var(--bg-3);
 }
 .g-avatar.lg {
 	width: 112rpx;

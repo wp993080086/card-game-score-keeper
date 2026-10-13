@@ -88,7 +88,7 @@
 .mvp .earnings .amount {
 	font-size: 44rpx;
 	font-weight: 700;
-	color: var(--win);
+	color: var(--up);
 }
 
 /* 区块标题 */
@@ -99,19 +99,20 @@
 	margin: 40rpx 0 20rpx;
 }
 
-/* 结算方案 */
+/* 结算方案（行样式复刻对局详情「每人累计输赢」stat-row：24rpx 32rpx 内边距 + 24rpx 间距 + sm 头像） */
 .plans {
 	background: var(--bg);
 	border-radius: var(--radius-md);
+	padding: 8rpx 0;
 	box-shadow: var(--shadow-card);
 	overflow: hidden;
 }
 .plan-item {
 	display: flex;
 	align-items: center;
-	padding: 28rpx 0;
+	padding: 24rpx 32rpx;
 	border-bottom: 2rpx solid var(--divider);
-	gap: 16rpx;
+	gap: 24rpx;
 }
 .plan-item:last-child {
 	border-bottom: none;
@@ -138,7 +139,6 @@
 	font-weight: 700;
 	color: var(--lose-text);
 	flex-shrink: 0;
-	padding-left: 16rpx;
 }
 
 /* 功能区 3 卡网格（排行榜已移除） */
@@ -215,8 +215,8 @@
 	height: 112rpx;
 }
 .plan-item .avatar-img {
-	width: 48rpx;
-	height: 48rpx;
+	width: 64rpx;
+	height: 64rpx;
 }
 
 /* 无转账空态（与 room-detail 页 .card-empty 同款） */
@@ -240,15 +240,6 @@
 .card-empty .sub {
 	font-size: 24rpx;
 	color: var(--text-3);
-}
-
-/* 战绩图画布：屏外渲染，仅用于生成图片（canvas 2d 无法离屏创建） */
-.poster-canvas {
-	position: fixed;
-	left: -9999px;
-	top: 0;
-	width: 375px;
-	height: 620px;
 }
 
 /* 遮罩 */

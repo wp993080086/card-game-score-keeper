@@ -41,13 +41,12 @@ const _calcSettlement = async (roomId) => {
 		}
 	}
 
-	// openid → 资料（取最近一次加入记录的昵称头像）
+	// openid → 资料（查询按插入序返回，后写的覆盖先写的，最终保留最近一次加入的昵称头像；
+	// 退房重进/中途改资料均以最新一条为准，不影响金额计算）
 	const memRes = await db.collection('room_members').where({ roomId }).get()
 	const info = {}
 	for (const m of memRes.data) {
-		if (!info[m.openid]) {
-			info[m.openid] = m
-		}
+		info[m.openid] = m
 	}
 
 	// 无流水的在场成员兜底 0 分（否则零流水对局结算页"每人累计输赢"空白）

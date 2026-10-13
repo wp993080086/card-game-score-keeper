@@ -70,4 +70,3 @@
 - 主动 commit
 - 引入不存在库
 - 暴露密钥
-- 不遵循 [openspec/project.md](openspec/project.md) 中的开发规范

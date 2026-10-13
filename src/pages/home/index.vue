@@ -63,8 +63,10 @@
 				</button>
 			</view>
 
-			<!-- 完善资料弹窗（首次无资料自动弹出，点编辑笔再次打开；一次填完头像+昵称） -->
-			<view class="profile-mask" :class="{ show: showProfile }" @touchmove.stop.prevent @click="_closeProfile">
+			<!-- 完善资料弹窗（首次无资料自动弹出，点编辑笔再次打开；一次填完头像+昵称）
+				关闭后 v-if 卸载整个弹窗 DOM：tab 页常驻不销毁，若只用 visibility 隐藏，
+				真机切回本页时隐藏的 nickname 输入框会被微信重新聚焦（键盘自动弹出） -->
+			<view v-if="profileMounted" class="profile-mask" :class="{ show: showProfile }" @touchmove.stop.prevent @click="_closeProfile">
 				<view class="profile-dialog" @click.stop>
 					<view class="close" @click="_closeProfile">✕</view>
 					<view class="title">完善资料</view>
@@ -89,10 +91,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import SafePageWrapper from '@/components/SafePageWrapper.vue'
-import { fetchUserProfile, saveUserProfile, uploadAvatar } from '@/apis/user'
+import { fetchUserProfile, saveUserProfile, uploadAvatar, checkContent } from '@/apis/user'
 import type { I_UserProfile } from '@/apis/user'
 import { createRoom, joinRoom, getOngoingRoom } from '@/apis/room'
 import { cloudErrMsg } from '@/apis/cloud'
@@ -133,6 +135,25 @@ const AVATAR_PRESET: TDict<I_Avatar> = {
 
 /** @description 配色轮转顺序*/
 const AVATAR_KEYS = ['default', 'win', 'lose', 'green']
+
+/** @description 合法房号（4 位去易混淆字符），冷启动/输房号/扫码三处共用*/
+const ROOM_CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/
+
+/**
+ * @description 从候选内容里提取合法房码（按序取第一个合法项）
+ * 兼容载体：码文本「房号：XXXX」（房间码普通二维码）、scene/roomCode= 参数（小程序码 path，真机能读到内容的机型）、纯房码
+ */
+const _resolveRoomCode = (...cands: string[]): string => {
+	for (const cand of cands) {
+		if (!cand) continue
+		const m = /(?:scene|roomCode|房号)[=：:]\s*([A-Z2-9]{4})(?![A-Z2-9])/i.exec(cand)
+		const code = String(m ? decodeURIComponent(m[1]) : cand)
+			.trim()
+			.toUpperCase()
+		if (ROOM_CODE_RE.test(code)) return code
+	}
+	return ''
+}
 
 /** @description 无头像成员按昵称哈希取固定配色（同一人颜色稳定）*/
 const hashColor = (name: string): I_Avatar => {
@@ -177,6 +198,18 @@ onUnload(() => {
 /** @description 资料弹窗显隐*/
 const showProfile = ref(false)
 
+/** @description 弹窗 DOM 挂载开关（关闭动画播完后再卸载，兼顾过渡动画与输入框不留残影）*/
+const profileMounted = ref(false)
+
+// 关闭后延迟卸载弹窗 DOM（0.24s 过渡 + 余量）；期间若重新打开则取消卸载
+watch(showProfile, (visible) => {
+	if (!visible) {
+		setTimeout(() => {
+			if (!showProfile.value) profileMounted.value = false
+		}, 300)
+	}
+})
+
 /** @description 建房请求进行中（防重复点击）*/
 const creating = ref(false)
 
@@ -198,14 +231,10 @@ let pendingAction: (() => void) | null = null
 /** @description 冷启动携带的待进房号（扫小程序码 scene / 转发卡片 roomCode），资料就绪后消费*/
 let pendingJoinCode = ''
 
-/** @description 解析冷启动参数中的房号（扫码进首页 scene 为 URL 编码；转发卡片直接带 roomCode），待资料就绪后自动进房*/
+/** @description 解析冷启动参数中的房号：转发卡片 roomCode / 小程序码 scene（URL 编码），待资料就绪后自动进房*/
 onLoad((options: TAny) => {
-	const scene = options?.scene ? decodeURIComponent(options.scene) : ''
-	const code = String(scene || options?.roomCode || '')
-		.trim()
-		.toUpperCase()
-	// 仅接受合法短码（4 位去易混淆字符），战绩图首页码 scene='h' 等非房码在此挡掉
-	if (/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/.test(code)) {
+	const code = _resolveRoomCode(options?.scene ? decodeURIComponent(options.scene) : '', options?.roomCode || '')
+	if (code) {
 		pendingJoinCode = code
 	}
 })
@@ -257,13 +286,16 @@ const _fetchOngoingRoom = () => {
 		})
 }
 
-/** @description 打开资料弹窗并带入当前资料*/
+/** @description 打开资料弹窗并带入当前资料（先挂载 DOM，下一帧再加 show 播放入场动画）*/
 const _openProfile = () => {
 	profileDraft.value = {
 		avatar: userInfo.value?.avatarUrl || '',
 		nickname: userInfo.value?.nickname || ''
 	}
-	showProfile.value = true
+	profileMounted.value = true
+	nextTick(() => {
+		showProfile.value = true
+	})
 }
 
 /** @description 关闭资料弹窗（点遮罩）*/
@@ -296,19 +328,23 @@ const _saveProfile = () => {
 	}
 	if (saving.value) return
 	saving.value = true
-	// 头像未更换则沿用旧 fileID，不重复上传
-	const oldAvatar = userInfo.value?.avatarUrl || ''
-	const upload = profileDraft.value.avatar
-		? profileDraft.value.avatar === oldAvatar
-			? Promise.resolve(oldAvatar)
-			: uploadAvatar(profileDraft.value.avatar)
-		: Promise.resolve('')
-	upload
-		.then((avatarUrl) => saveUserProfile({ nickname, avatarUrl }, userDocId || undefined))
-		.then((docId) => {
+	// 昵称先过内容安全检测（msgSecCheck，提审声明项），违规直接拦截不入库
+	checkContent('text', { content: nickname })
+		.then(() => {
+			// 头像未更换则沿用旧 fileID，不重复上传
+			const oldAvatar = userInfo.value?.avatarUrl || ''
+			const upload = profileDraft.value.avatar
+				? profileDraft.value.avatar === oldAvatar
+					? Promise.resolve(oldAvatar)
+					: uploadAvatar(profileDraft.value.avatar)
+				: Promise.resolve('')
+			return upload
+		})
+		.then((avatarUrl) => saveUserProfile({ nickname, avatarUrl }, userDocId || undefined).then((docId) => ({ docId, avatarUrl })))
+		.then(({ docId, avatarUrl }) => {
 			userDocId = docId
-			// avatarUrl 为上传后的 fileID（或沿用旧值/空串），临时路径不能长期展示
-			userInfo.value = { _id: docId, nickname, avatarUrl: profileDraft.value.avatar ? profileDraft.value.avatar : '' }
+			// 展示用上传后的 fileID（未换头像时为旧值），不能用临时路径（会过期变空白）
+			userInfo.value = { _id: docId, nickname, avatarUrl }
 			showProfile.value = false
 			uni.showToast({ title: '已保存', icon: 'success' })
 			// 若是进房前补完善，保存成功后自动继续刚才的操作
@@ -398,20 +434,19 @@ const _createRoom = () => {
 	})
 }
 
-/** @description 扫码进房：真机扫小程序码 result 为空，码内房号在 path 的 scene 参数里（工具模拟扫码走 result）*/
+/** @description 扫码进房：房间码为普通二维码（码文本含「房号：XXXX」），wx.scanCode 可靠读出 result；
+ *	兼容扫到的小程序码（真机部分机型拿不到内容，拿不到时引导输房号兜底）*/
 const _scanJoin = () => {
 	uni.scanCode({
 		success: (res: TAny) => {
-			// 开发期打出原始扫码结果，便于定位工具/真机对小程序码的 path/result 格式差异
-			console.log('[home] 扫码原始结果 path:', res.path, 'result:', res.result)
-			const match = /(?:scene|roomCode)=([^&]+)/.exec(res.path || '')
-			const roomCode = match ? decodeURIComponent(match[1]) : res.result
+			// 开发期打出原始扫码结果，便于定位工具/真机对码内容的格式差异
+			console.log('[home] 扫码原始结果 path:', res.path, 'result:', res.result, 'scanType:', res.scanType)
+			const roomCode = _resolveRoomCode(String(res.result || ''), String(res.path || ''))
 			if (!roomCode) {
-				// 提示带上原始值：扫到非小程序码（普通二维码/截图）时能直接看出内容
-				uni.showToast({ title: `未识别到房号：${res.path || res.result || '空'}`, icon: 'none' })
+				uni.showToast({ title: '未识别到房号，请用「输房号进房」', icon: 'none' })
 				return
 			}
-			_joinByCode(String(roomCode).toUpperCase())
+			_joinByCode(roomCode)
 		},
 		fail: () => {
 			uni.showToast({ title: '已取消扫码', icon: 'none' })
@@ -431,8 +466,8 @@ const _inputJoin = () => {
 				const code = String(res.content || '')
 					.trim()
 					.toUpperCase()
-				// 与冷启动解析同款校验（4 位去易混淆字符集），格式错直接提示不发请求
-				if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/.test(code)) {
+				// 与冷启动解析同款校验（合法格式才发请求），格式错直接提示不发请求
+				if (!ROOM_CODE_RE.test(code)) {
 					uni.showToast({ title: '房号格式不正确', icon: 'none' })
 					return
 				}

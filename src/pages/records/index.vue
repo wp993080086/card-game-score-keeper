@@ -41,7 +41,25 @@
 				</view>
 			</template>
 
-			<!-- 空状态：对齐 design/empty-records.html -->
+			<!-- 首次加载中：骨架屏（对齐真实布局：累计统计卡片 + 分组标题 + 牌局列表），不闪"还没有记录"空态 -->
+			<template v-else-if="loading">
+				<view class="summary sk-summary">
+					<view v-for="i in 3" :key="`sk-s-${i}`" class="sk-stat"></view>
+				</view>
+				<view class="sk-group-title"></view>
+				<view class="record-list sk-list">
+					<view v-for="i in 3" :key="`sk-${i}`" class="sk-row">
+						<view class="sk-avatar"></view>
+						<view class="sk-meta">
+							<view class="sk-line w40"></view>
+							<view class="sk-line w70"></view>
+						</view>
+						<view class="sk-amount"></view>
+					</view>
+				</view>
+			</template>
+
+			<!-- 空状态：对齐 design/empty-records.html（仅在加载结束且确实无数据时展示） -->
 			<view v-else class="empty">
 				<view class="illus">🃏</view>
 				<view class="title">还没有牌局记录</view>
@@ -60,6 +78,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import SafePageWrapper from '@/components/SafePageWrapper.vue'
 import { getMyGames } from '@/apis/game'
+import { cloudErrMsg } from '@/apis/cloud'
 import type { I_GameItem } from '@/apis/game'
 
 defineOptions({
@@ -129,6 +148,9 @@ const summary = ref({ total: 0, winRate: 0, net: 0 })
 /** @description 按日期归档的历史牌局（为空时展示空状态）*/
 const groupList = ref<I_RecordGroup[]>([])
 
+/** @description 首屏加载标记：首进无缓存时展示轻提示；此后 onShow 静默刷新，旧数据先渲染不转圈*/
+const loading = ref(true)
+
 /** @description 汇总累计统计：总局数 / 胜率（净额>0 记胜）/ 累计积分*/
 const _buildSummary = (games: I_GameItem[]) => {
 	const net = games.reduce((acc, g) => acc + g.net, 0)
@@ -178,9 +200,8 @@ const _buildGroups = (games: I_GameItem[]): I_RecordGroup[] => {
 	return order.filter((t) => map[t] && map[t].length).map((t) => ({ title: t, list: map[t] }))
 }
 
-/** @description 拉取我的战绩并归档（tab 页 onShow 每次刷新）*/
+/** @description 拉取我的战绩并归档（tab 页常驻，onShow 每次静默刷新：已有数据先渲染、回包后原位更新，不再全屏转圈）*/
 const _fetchGames = () => {
-	uni.showLoading({ title: '加载中…', mask: true })
 	getMyGames()
 		.then((res) => {
 			const games = res.games || []
@@ -189,10 +210,10 @@ const _fetchGames = () => {
 		})
 		.catch((err) => {
 			console.error('[records] 战绩加载失败:', err)
-			uni.showToast({ title: `战绩加载失败：${err?.errMsg || err?.errMessage || err?.message || '未知错误'}`, icon: 'none' })
+			uni.showToast({ title: `战绩加载失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
-			uni.hideLoading()
+			loading.value = false
 		})
 }
 

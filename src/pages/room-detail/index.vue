@@ -32,60 +32,70 @@
 			<!-- 结算方案 -->
 			<view class="section-title">结算方案</view>
 			<view class="plans-card">
-				<view v-for="plan in planList" :key="`${plan.fromOpenid}-${plan.toOpenid}`" class="plan-item">
-					<image
-						v-if="plan.fromAvatarUrl"
-						class="g-avatar xs avatar-img"
-						:src="avatarSrc(plan.fromAvatarUrl)"
-						mode="aspectFill"
-						@error="onAvatarError(plan.fromAvatarUrl)"
-					/>
-					<view v-else class="g-avatar xs" :style="avatarStyle(hashColor(plan.from))">{{ plan.from.charAt(0) }}</view>
-					<view class="from">{{ plan.from }}</view>
-					<view class="arrow">→</view>
-					<view class="to">{{ plan.to }}</view>
-					<view class="amount">{{ plan.amount }} 分</view>
-				</view>
-				<view v-if="!planList.length" class="card-empty">
-					<view class="ico">🃏</view>
-					<view class="txt">本局没有转账记录</view>
-				</view>
+				<!-- 加载骨架：灰圆+灰条占住卡片高度，避免空卡塌缩；数据到后原位替换 -->
+				<template v-if="loading">
+					<view v-for="i in 2" :key="`sk-p-${i}`" class="sk-row">
+						<view class="sk-avatar"></view>
+						<view class="sk-line"></view>
+					</view>
+				</template>
+				<template v-else>
+					<view v-for="plan in planList" :key="`${plan.fromOpenid}-${plan.toOpenid}`" class="plan-item">
+						<!-- 头像：固定尺寸 g-avatar 包裹 + 内层 image 100%（对齐首页写法）；无头像/加载失败兜底默认头像 -->
+						<view class="g-avatar sm">
+							<image class="avatar-img" :src="avatarDisplaySrc(plan.fromAvatarUrl)" mode="aspectFill" @error="onAvatarError(plan.fromAvatarUrl)" />
+						</view>
+						<view class="from">{{ plan.from }}</view>
+						<view class="arrow">→</view>
+						<view class="to">{{ plan.to }}</view>
+						<view class="amount">{{ plan.amount }} 分</view>
+					</view>
+					<view v-if="!loading && !planList.length" class="card-empty">
+						<view class="ico">🃏</view>
+						<view class="txt">本局没有转账记录</view>
+					</view>
+				</template>
 			</view>
 
 			<!-- 每人累计输赢 -->
 			<view class="section-title">每人累计输赢</view>
 			<view class="stats-card">
-				<view v-for="stat in netScores" :key="stat.openid" class="stat-row">
-					<image
-						v-if="stat.avatarUrl"
-						class="g-avatar sm avatar-img"
-						:src="avatarSrc(stat.avatarUrl)"
-						mode="aspectFill"
-						@error="onAvatarError(stat.avatarUrl)"
-					/>
-					<view v-else class="g-avatar sm" :style="avatarStyle(hashColor(stat.name))">{{ stat.name.charAt(0) }}</view>
-					<view class="name">{{ stat.name }}</view>
-					<view class="val" :class="stat.net >= 0 ? 'win' : 'lose'">{{ formatNet(stat.net) }}</view>
-				</view>
-				<view v-if="!netScores.length" class="card-empty">
-					<view class="ico">📊</view>
-					<view class="txt">暂无输赢数据</view>
-					<view class="sub">若长时间未显示，请返回重试</view>
-				</view>
+				<!-- 加载骨架：同结算方案卡 -->
+				<template v-if="loading">
+					<view v-for="i in 2" :key="`sk-s-${i}`" class="sk-row">
+						<view class="sk-avatar"></view>
+						<view class="sk-line"></view>
+					</view>
+				</template>
+				<template v-else>
+					<view v-for="stat in netScores" :key="stat.openid" class="stat-row">
+						<!-- 头像：固定尺寸 g-avatar 包裹 + 内层 image 100%（对齐首页写法）；无头像/加载失败兜底默认头像 -->
+						<view class="g-avatar sm">
+							<image class="avatar-img" :src="avatarDisplaySrc(stat.avatarUrl)" mode="aspectFill" @error="onAvatarError(stat.avatarUrl)" />
+						</view>
+						<view class="name">{{ stat.name }}</view>
+						<view class="val" :class="stat.net >= 0 ? 'win' : 'lose'">{{ formatNet(stat.net) }}</view>
+					</view>
+					<view v-if="!loading && !netScores.length" class="card-empty">
+						<view class="ico">📊</view>
+						<view class="txt">暂无输赢数据</view>
+						<view class="sub">若长时间未显示，请返回重试</view>
+					</view>
+				</template>
 			</view>
 
-			<!-- 流水明细入口 -->
-			<view class="flow-entry" @click="_goFlow">
-				<text>📋 查看流水明细</text>
-				<text class="arrow">›</text>
-			</view>
-
-			<!-- reLaunch 清栈进入（结算完成后跳转）时无上一页、原生返回键不可用，页内提供回首页入口 -->
-			<view v-if="isStackRoot" class="flow-entry" @click="_goHome">
-				<text>🏠 回到首页</text>
-				<text class="arrow">›</text>
+			<!-- 底部操作入口：2×2 对齐房间页按钮样式；未结算时战绩图两钮隐藏，流水+返回各半 -->
+			<view class="entry-bar">
+				<view v-if="settled" class="entry-btn" @click="_saveResult">📥 保存战绩图</view>
+				<view v-if="settled" class="entry-btn" @click="_shareResult">📤 分享战绩图</view>
+				<view class="entry-btn" @click="_goFlow">📋 查看流水明细</view>
+				<!-- 栈根（结算完成 reLaunch 进入，无上一页）→ 回到首页；从战绩页 navigateTo 进入 → 返回上一页 -->
+				<view class="entry-btn" @click="_goBackHome">{{ isStackRoot ? '🏠 回到首页' : '🔙 返回上一页' }}</view>
 			</view>
 		</template>
+
+		<!-- 战绩图绘制画布（屏外渲染，仅用于生成图片；canvas 2d 无法离屏创建） -->
+		<canvas id="poster" type="2d" class="poster-canvas"></canvas>
 	</view>
 </template>
 
@@ -94,17 +104,12 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { settle } from '@/apis/room'
 import { cloudErrMsg } from '@/apis/cloud'
-import { useAvatarFallback } from '@/utils/avatar'
+import { useAvatarFallback, DEFAULT_AVATAR } from '@/utils/avatar'
+import { generateResultPoster, savePosterToAlbum, openSharePanel } from '@/utils/poster'
 
 defineOptions({
 	name: 'RoomDetail'
 })
-
-/** @description 头像配色（背景 + 文字色）*/
-interface I_Avatar {
-	bg: string
-	color: string
-}
 
 /** @description 最少转账方案条目（渲染模型：昵称 + 支出方头像）*/
 interface I_PlanItem {
@@ -124,29 +129,33 @@ interface I_StatItem {
 	avatarUrl: string
 }
 
-/** @description 头像配色方案（对齐设计稿 mock）*/
-const AVATAR_PRESET: TDict<I_Avatar> = {
-	default: { bg: 'var(--primary-soft)', color: 'var(--primary-text)' },
-	win: { bg: 'var(--win-soft)', color: 'var(--win-text)' },
-	lose: { bg: 'var(--lose-soft)', color: 'var(--lose-text)' },
-	green: { bg: '#e8f7ee', color: '#34a35b' }
-}
-
 /** @description 头像加载失败兜底（失败地址换本地 avatar.png 占位）*/
-const { onAvatarError, avatarSrc } = useAvatarFallback()
+const { failed, onAvatarError } = useAvatarFallback()
 
-/** @description 配色轮转顺序*/
-const AVATAR_KEYS = ['default', 'win', 'lose', 'green']
+/** @description cloud:// fileID → 临时链接解析结果缓存（'' 解析中，DEFAULT_AVATAR 解析失败）*/
+const avatarUrls = ref<TDict<string>>({})
 
-/** @description 拼接头像内联样式*/
-const avatarStyle = (avatar: I_Avatar): string => {
-	return `background:${avatar.bg};color:${avatar.color}`
+/** @description cloud fileID 转临时链接（一次性，结果缓存；读不到/失败兜底默认头像）*/
+const _resolveCloudAvatar = (url: string) => {
+	if (avatarUrls.value[url] !== undefined) return
+	avatarUrls.value = { ...avatarUrls.value, [url]: '' }
+	wx.cloud
+		.getTempFileURL({ fileList: [url] })
+		.then((res: TAny) => {
+			const temp = res?.fileList?.[0]?.tempFileURL || ''
+			avatarUrls.value = { ...avatarUrls.value, [url]: temp || DEFAULT_AVATAR }
+		})
+		.catch(() => {
+			avatarUrls.value = { ...avatarUrls.value, [url]: DEFAULT_AVATAR }
+		})
 }
 
-/** @description 无头像成员按昵称哈希取固定配色（同一人颜色稳定）*/
-const hashColor = (name: string): I_Avatar => {
-	const sum = [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
-	return AVATAR_PRESET[AVATAR_KEYS[sum % AVATAR_KEYS.length]]
+/** @description 头像实际渲染地址：无头像/解析失败 → 默认头像兜底；https 直用（加载失败走 @error）*/
+const avatarDisplaySrc = (url: string): string => {
+	if (!url || failed.value[url]) return DEFAULT_AVATAR
+	if (!url.startsWith('cloud://')) return url
+	_resolveCloudAvatar(url)
+	return avatarUrls.value[url] || DEFAULT_AVATAR
 }
 
 /** @description 格式化净输赢展示（正数带 + 号）*/
@@ -168,6 +177,9 @@ const roomCode = ref('')
 
 /** @description 当前用户 openid（users「仅创建者可读写」权限下 get 即自己的记录）*/
 const myOpenid = ref('')
+
+/** @description 结算数据加载中（空态文案只在加载结束后才参与判断，避免先闪"无内容"再出数据）*/
+const loading = ref(true)
 
 /** @description 房间是否已结算*/
 const settled = ref(false)
@@ -191,7 +203,7 @@ const dateLabel = computed(() => formatTime(settledAt.value))
 const memberCount = computed(() => netScores.value.length)
 
 /** @description 你的净输赢（快照里按 openid 匹配，无记录视为 0）*/
-const myNet = computed(() => netScores.value.find((s) => s.openid === myOpenid.value)?.delta ?? 0)
+const myNet = computed(() => netScores.value.find((s) => s.openid === myOpenid.value)?.net ?? 0)
 
 /** @description 房间 id 缺失（进入来源未携带参数，如战绩列表占位数据）*/
 const missingRoom = ref(false)
@@ -224,9 +236,49 @@ const _goFlow = () => {
 	uni.navigateTo({ url: `/pages/flow/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
 }
 
-/** @description 回到首页（栈根状态下使用，reLaunch 清栈保证首页为新实例、无旧数据残影）*/
-const _goHome = () => {
-	uni.reLaunch({ url: '/pages/home/index' })
+/** @description 末位入口：栈根（结算完成 reLaunch 进入，无上一页）回首页；从战绩页进来返回上一页（失败兜底回首页）*/
+const _goBackHome = () => {
+	if (isStackRoot.value) {
+		uni.reLaunch({ url: '/pages/home/index' })
+		return
+	}
+	uni.navigateBack({ fail: () => uni.reLaunch({ url: '/pages/home/index' }) })
+}
+
+/** @description 首页码 fileID（settle 快照带出，战绩图底部用）*/
+const homeQrFileID = ref('')
+
+/** @description 生成战绩图临时文件（查画布→绘制→导出；保存/分享共用）*/
+const _ensurePoster = (): Promise<string> => {
+	uni.showLoading({ title: '生成中…', mask: true })
+	return generateResultPoster({
+		canvasId: 'poster',
+		roomCode: roomCode.value,
+		rows: netScores.value.map((s) => ({ nickname: s.name, delta: s.net })),
+		homeQrFileID: homeQrFileID.value
+	}).finally(() => {
+		uni.hideLoading()
+	})
+}
+
+/** @description 战绩图生成失败统一提示*/
+const _posterError = (err: TAny) => {
+	console.error('[room-detail] 战绩图生成失败:', err)
+	uni.showToast({ title: `生成失败：${cloudErrMsg(err)}`, icon: 'none' })
+}
+
+/** @description 保存战绩图到相册（回调精准：成功 toast「已保存到相册」；取消静默；授权被拒引导去设置）*/
+const _saveResult = () => {
+	_ensurePoster()
+		.then((filePath) => savePosterToAlbum(filePath, '[room-detail]'))
+		.catch(_posterError)
+}
+
+/** @description 分享战绩图：生成后直接弹系统转发面板（发送给朋友/收藏/下载），不做保存动作（保存走独立的「保存战绩图」按钮）*/
+const _shareResult = () => {
+	_ensurePoster()
+		.then((filePath) => openSharePanel(filePath, '[room-detail]'))
+		.catch(_posterError)
 }
 
 /** @description 拉取自己资料（依赖 users「仅创建者可读写」权限：get 过滤后只返回自己的记录）*/
@@ -253,6 +305,7 @@ const _fetchSettlement = () => {
 		.then((res) => {
 			settled.value = res.settled
 			settledAt.value = res.settledAt || null
+			homeQrFileID.value = res.homeQrFileID || ''
 			transferCount.value = res.recordCount || 0
 			netScores.value = (res.netScores || []).map((s) => ({
 				openid: s.openid,
@@ -276,6 +329,9 @@ const _fetchSettlement = () => {
 		.catch((err) => {
 			console.error('[room-detail] 结算数据加载失败:', err)
 			uni.showToast({ title: `对局详情加载失败：${cloudErrMsg(err)}`, icon: 'none' })
+		})
+		.finally(() => {
+			loading.value = false
 		})
 }
 </script>

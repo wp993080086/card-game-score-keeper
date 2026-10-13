@@ -44,10 +44,10 @@
 	margin-top: 4rpx;
 }
 .head-info .my-net .val.win {
-	color: var(--win);
+	color: var(--up);
 }
 .head-info .my-net .val.lose {
-	color: var(--lose);
+	color: var(--down);
 }
 .head-info .summary-row {
 	display: flex;
@@ -93,7 +93,7 @@
 	padding: 24rpx 32rpx;
 	border-bottom: 2rpx solid var(--divider);
 	font-size: 28rpx;
-	gap: 16rpx;
+	gap: 24rpx;
 }
 .plan-item:last-child {
 	border-bottom: none;
@@ -125,26 +125,78 @@
 	box-shadow: var(--shadow-card);
 }
 
-/* 流水明细入口 */
-.flow-entry {
-	margin: 24rpx 32rpx 0;
-	padding: 26rpx 32rpx;
+/* 加载骨架：灰圆 + 灰条占住卡片高度（数据未到时空卡会塌缩），轻微呼吸动画，数据到后原位替换 */
+.sk-row {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	background: var(--bg);
-	border-radius: var(--radius-md);
-	box-shadow: var(--shadow-card);
-	font-size: 28rpx;
-	font-weight: 500;
-	color: var(--text-1);
+	gap: 24rpx;
+	padding: 24rpx 32rpx;
+	border-bottom: 2rpx solid var(--divider);
 }
-.flow-entry:active {
+.sk-row:last-child {
+	border-bottom: none;
+}
+.sk-avatar {
+	width: 48rpx;
+	height: 48rpx;
+	border-radius: 50%;
+	background: var(--bg-3);
+	animation: sk-breath 1.2s ease-in-out infinite alternate;
+}
+.sk-line {
+	flex: 1;
+	height: 28rpx;
+	border-radius: 8rpx;
+	background: var(--bg-3);
+	animation: sk-breath 1.2s ease-in-out infinite alternate;
+}
+.stats-card .sk-avatar {
+	width: 64rpx;
+	height: 64rpx;
+}
+@keyframes sk-breath {
+	from {
+		opacity: 0.55;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* 底部操作入口：对齐房间页底部按钮（单按钮占满一行，双按钮各半，中间留间距；三按钮时自动换行） */
+.entry-bar {
+	margin: 24rpx 32rpx 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24rpx;
+}
+.entry-bar .entry-btn {
+	/* box-sizing 必须加：content-box 下 2rpx 边框撑大按钮，calc(50%)+gap 总宽超 100%，wrap 导致每钮独占一行 */
+	box-sizing: border-box;
+	/* basis 留出富余防浮点取整误差溢出换行，flex-grow 会补齐到各半 */
+	flex: 1 1 calc(50% - 24rpx);
+	height: 96rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-md);
+	font-size: 32rpx;
+	font-weight: 600;
+	color: var(--primary);
+	border: 2rpx solid var(--primary);
+	background: transparent;
+}
+.entry-bar .entry-btn:active {
 	opacity: 0.7;
 }
-.flow-entry .arrow {
-	color: var(--text-3);
-	font-size: 32rpx;
+
+/* 战绩图画布：屏外渲染，仅用于生成图片（canvas 2d 无法离屏创建） */
+.poster-canvas {
+	position: fixed;
+	left: -9999px;
+	top: 0;
+	width: 375px;
+	height: 620px;
 }
 .stat-row {
 	display: flex;
@@ -169,26 +221,19 @@
 	font-weight: 700;
 }
 .stat-row .val.win {
-	color: var(--win);
+	color: var(--up);
 }
 .stat-row .val.lose {
-	color: var(--lose);
+	color: var(--down);
 }
 
-/* 真实头像图：显式定尺寸（对齐模板上 g-avatar xs/sm 的规格）。
-   勿用 100% 宽高——百分比相对自适应父级无法解析会让头像位塌缩，
-   相对整行解析又会撑成全宽大块挤扁同行文字（home 页 user-card 同款教训） */
-.avatar-img {
-	display: block;
-	border-radius: 50%;
-}
-.plans-card .avatar-img {
-	width: 48rpx;
-	height: 48rpx;
-}
+/* 真实头像图：内层 image 撑满固定尺寸的 g-avatar 包裹（父级 wrapper 尺寸固定，100% 可正常解析；g-avatar overflow:hidden 裁圆） */
+.plans-card .avatar-img,
 .stats-card .avatar-img {
-	width: 64rpx;
-	height: 64rpx;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
 }
 
 /* 卡片空状态（结算方案/每人输赢无数据时） */

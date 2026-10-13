@@ -27,10 +27,13 @@
 			</view>
 		</view>
 
-		<!-- 点击提示 -->
+		<!-- 点击提示：三句轮播（每句停 3s → 1s 左滑切下一句，循环） -->
 		<view class="tap-hint">
-			<text class="ico">👆</text>
-			<text>点击其他成员头像，向他支付积分</text>
+			<view class="hint-viewport">
+				<view class="hint-track" :class="{ animated: hintAnimated }" :style="{ transform: `translateX(-${hintIndex * 100}%)` }">
+					<text v-for="(msg, i) in hintSlides" :key="i" class="hint-slide">{{ msg }}</text>
+				</view>
+			</view>
 		</view>
 
 		<!-- 消息流：watch 最近 50 条，滚到顶部加载更早 -->
@@ -60,7 +63,7 @@
 
 		<!-- 底部操作栏 -->
 		<view class="actions-bar">
-			<button class="btn outline" @click="_goSettle">🏁 结算</button>
+			<button class="btn outline" @click="_goSettle">📋 对局详情</button>
 			<button class="btn primary" @click="_openSheet">💬 快捷语句</button>
 		</view>
 
@@ -78,7 +81,7 @@
 					<view class="hint">邀请好友扫描以下二维码加入</view>
 				</view>
 				<view class="qr-area">
-					<!-- createRoom 生成的小程序码（rooms.qrFileID），空则显示占位 -->
+					<!-- createRoom 生成的房间码普通二维码（rooms.qrFileID），空则显示占位 -->
 					<image v-if="roomInfo?.qrFileID" class="qr-img" :src="roomInfo.qrFileID" mode="aspectFit" />
 					<view v-else class="qr-placeholder">二维码</view>
 				</view>
@@ -289,6 +292,40 @@ const loadingOlder = ref(false)
 /** @description 是否还有更早消息（一批取满 50 视为还有）*/
 const hasMoreMessages = ref(true)
 
+/** @description 提示轮播文案（尾部复制第一句用于"最后→第一句"的无缝左滑）*/
+const HINTS = ['点击其他成员头像，向ta支付积分', '转错了？本平台不支持撤销，让对方反向转一次即可修正', '打完后房主点结算，自动算最少转账方案']
+const hintSlides = [...HINTS, HINTS[0]]
+
+/** @description 当前滑动到第几张（=HINTS.length 时为尾部克隆帧，播完瞬间无动画跳回 0）*/
+const hintIndex = ref(0)
+
+/** @description 是否带左滑过渡（跳回 0 的瞬间要关掉，避免倒放）*/
+const hintAnimated = ref(true)
+
+/** @description 轮播定时器（onUnload 清除）*/
+let hintTimer: ReturnType<typeof setTimeout> | null = null
+
+/** @description 轮播节拍：停 3s → 1s 左滑到下一句 → 若滑到克隆帧则无动画跳回第一句 → 循环*/
+const _nextHint = () => {
+	hintTimer = setTimeout(() => {
+		hintIndex.value += 1
+		hintTimer = setTimeout(() => {
+			if (hintIndex.value >= HINTS.length) {
+				hintAnimated.value = false
+				hintIndex.value = 0
+				// 跳回渲染完成后下一帧再恢复过渡，保证下一轮滑动有动画
+				setTimeout(() => {
+					hintAnimated.value = true
+					_nextHint()
+				}, 50)
+				return
+			}
+			_nextHint()
+		}, 1000)
+	}, 3000)
+}
+_nextHint()
+
 /** @description 接收跳转参数并初始化房间数据*/
 onLoad((options: TAny) => {
 	roomId.value = options?.roomId || ''
@@ -306,11 +343,12 @@ onLoad((options: TAny) => {
 	_watchRoom()
 })
 
-/** @description 离开页面关闭实时监听*/
+/** @description 离开页面关闭实时监听与轮播*/
 onUnload(() => {
 	memberWatcher?.close()
 	messageWatcher?.close()
 	roomWatcher?.close()
+	if (hintTimer) clearTimeout(hintTimer)
 })
 
 /** @description 拉取房间文档（房主/上限/小程序码 fileID）*/
@@ -366,6 +404,8 @@ const _watchMembers = () => {
 
 /** @description 监听房间状态：房主结算/解散后，留在房间内的成员立即感知并带离（清栈跳转，避免滞留僵尸房间页）*/
 const _watchRoom = () => {
+	// 结算/解散弹窗只提示一次（后续快照不再重复弹）
+	let prompted = false
 	roomWatcher = wx.cloud
 		.database()
 		.collection('rooms')
@@ -373,7 +413,12 @@ const _watchRoom = () => {
 		.watch({
 			onChange: (snapshot) => {
 				const room = snapshot.docs[0]
-				if (!room || room.status === 'gaming') return
+				if (!room) return
+				// 房间文档有变就同步进 roomInfo（含初始快照）：createRoom 的二维码是异步生成回填
+				// rooms.qrFileID 的，弹窗早退拦掉更新会导致弹窗里永远显示"二维码"占位
+				roomInfo.value = room
+				if (room.status === 'gaming' || prompted) return
+				prompted = true
 				const settled = room.status === 'settled'
 				uni.showModal({
 					title: settled ? '本局已结算' : '房间已解散',
@@ -477,18 +522,27 @@ const _cancelTransfer = () => {
 	showTransfer.value = false
 }
 
-/** @description 确认支出：校验正整数 → transfer 云函数落账发动态（payment 消息由 watch 推送）*/
+/** @description 确认支出：校验正整数 → 先收弹窗再后台调 transfer 落账。
+ *   转账是低频小操作，不等云函数回包（用户感知就是点完即关）；失败仅弹 toast，账没记上可直接重试；
+ *   成功后 payment 消息由 watch 推送进消息流，即到账反馈 */
 const _confirmTransfer = () => {
 	const amount = Number(transferAmount.value)
 	if (!Number.isInteger(amount) || amount <= 0) {
 		uni.showToast({ title: '请输入正整数积分', icon: 'none' })
 		return
 	}
-	if (!transferTarget.value || transferring.value) return
+	if (!transferTarget.value) return
+	if (transferring.value) {
+		// 上一笔还在途：明确提示而不是静默吞掉点击
+		uni.showToast({ title: '上一笔转账处理中，请稍候', icon: 'none' })
+		return
+	}
+	const target = transferTarget.value
 	transferring.value = true
-	transfer({ roomId: roomId.value, toOpenid: transferTarget.value.openid, amount })
+	showTransfer.value = false
+	transferAmount.value = ''
+	transfer({ roomId: roomId.value, toOpenid: target.openid, amount })
 		.then(() => {
-			showTransfer.value = false
 			_scrollToBottom()
 		})
 		.catch((err) => {
@@ -506,7 +560,7 @@ const _openSheet = () => {
 	showSheet.value = true
 }
 
-/** @description 前往结算页（结算方案预览与确认、退出/解散入口）*/
+/** @description 前往结算页（按钮文案展示为「对局详情」，实际仍进结算页：含实时结算方案、退出/解散入口）*/
 const _goSettle = () => {
 	uni.navigateTo({ url: `/pages/settlement/index?roomId=${roomId.value}&roomCode=${roomCode.value}` })
 }

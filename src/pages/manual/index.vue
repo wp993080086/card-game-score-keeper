@@ -22,13 +22,13 @@
 				<view class="ico" style="background: #e3f2fd">→</view>
 				<view class="body">
 					<view class="h">点头像支付</view>
-					<view class="d">点其他成员头像，输入正整数（&gt;0）向他支付积分</view>
+					<view class="d">点其他成员头像，输入数字，向ta支付积分</view>
 				</view>
 			</view>
 			<view class="guide-item">
 				<view class="ico" style="background: #fff1ed">!</view>
 				<view class="body">
-					<view class="h">转错了</view>
+					<view class="h">转错了？</view>
 					<view class="d">本平台不支持撤销，让对方反向转一次即可修正</view>
 				</view>
 			</view>
@@ -74,8 +74,8 @@ interface I_FaqItem {
 /** @description 快速入门步骤文案（对齐 design/manual.html，静态内容）*/
 const quickSteps: I_Step[] = [
 	{ num: 1, text: '点击首页「创建房间」，生成 4 位房号' },
-	{ num: 2, text: '邀请好友扫码加入（最多 4 人）' },
-	{ num: 3, text: '点击成员头像向他支付积分（仅本人向他人支出）' },
+	{ num: 2, text: '邀请好友扫码或分享加入' },
+	{ num: 3, text: '点击成员头像向ta支付积分（仅本人向他人支出）' },
 	{ num: 4, text: '打完后点结算，自动算最少转账方案' }
 ]
 
@@ -83,7 +83,7 @@ const quickSteps: I_Step[] = [
 const faqList: I_FaqItem[] = [
 	{ q: '平台会收取费用吗？', a: '完全免费，无任何抽成。' },
 	{ q: '积分能换成钱吗？', a: '本平台只做记账工具，转账由好友间自行完成。' },
-	{ q: '房间人数能扩容吗？', a: '房主可看广告将上限提升至 6 人或 8 人。' }
+	{ q: '房间人数能扩容吗？', a: '房主可看广告将上限提升至 6 / 8 人。' }
 ]
 </script>
 
