@@ -31,21 +31,19 @@ const _errText = (err) => {
 const _isDuplicate = (err) => /duplicate|duplicated|already exist|E11000|已存在/i.test(_errText(err))
 
 /**
- * @description 集合不存在时创建。云函数 add 不会自动建表，必须先 createCollection
+ * @description 没有这张表就创建，已经有就继续。建房前调用
  * @param {string} name 集合名
  * @return {Promise<void>}
  */
 const _ensureCollection = async (name) => {
-	if (typeof db.createCollection !== 'function') {
-		throw new Error(`请在云开发数据库新建集合 ${name}`)
-	}
 	try {
 		await db.createCollection(name)
 	} catch (err) {
-		const text = _errText(err)
-		if (/not exist/i.test(text)) throw new Error(`请在云开发数据库新建集合 ${name}`, { cause: err })
-		if (/exist/i.test(text)) return
-		throw err
+		try {
+			await db.collection(name).limit(1).get()
+		} catch (readErr) {
+			throw err
+		}
 	}
 }
 
