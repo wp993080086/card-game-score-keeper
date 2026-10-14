@@ -421,7 +421,7 @@ const _watchMembers = () => {
 		})
 }
 
-/** @description 监听房间状态：房主结算/解散后，留在房间内的成员立即感知并带离（清栈跳转，避免滞留僵尸房间页）*/
+/** @description 监听房间状态。解散时所有人确认后再离开。结算时房主由结算页自己跳转，其他人点「看战绩」再去对局详情 */
 const _watchRoom = () => {
 	// 结算/解散弹窗只提示一次（后续快照不再重复弹）
 	let prompted = false
@@ -440,14 +440,17 @@ const _watchRoom = () => {
 				if (room.status === 'gaming' || room.status === 'settling' || prompted) return
 				prompted = true
 				const settled = room.status === 'settled'
+				// 房主在结算页确认后会自己跳到对局详情。这里再弹，会被那次跳转马上关掉
+				if (settled && room.ownerOpenid && room.ownerOpenid === myOpenid.value) return
 				uni.showModal({
 					title: settled ? '本局已结算' : '房间已解散',
 					content: settled ? '去看看对局战绩' : '房主已解散房间',
 					showCancel: false,
 					confirmText: settled ? '看战绩' : '知道了',
-					success: () => {
+					success: (res) => {
+						if (!res.confirm) return
 						uni.reLaunch({
-							url: settled ? `/pages/settlement/index?roomId=${roomId.value}&roomCode=${roomCode.value}` : '/pages/home/index'
+							url: settled ? `/pages/room-detail/index?roomId=${roomId.value}&roomCode=${roomCode.value}` : '/pages/home/index'
 						})
 					}
 				})
