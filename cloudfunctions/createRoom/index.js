@@ -156,7 +156,8 @@ const _claimCode = async () => {
 			lastErr = err
 			console.error('[createRoom] 占用房号失败:', _codeDocId(code), err)
 			if (_isDuplicate(err)) continue
-			throw new Error(`房号分配失败：${_errText(err)}`, { cause: err })
+			// 内部错误原文不透传给用户（服务端日志已留 _errText），统一给重试提示
+			throw new Error('房号分配繁忙，请重试', { cause: err })
 		}
 	}
 	console.error('[createRoom] 房号多次占用失败:', lastErr)

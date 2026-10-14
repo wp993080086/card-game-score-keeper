@@ -266,10 +266,11 @@ const _ensureClosed = async (room) => {
 		.collection('room_members')
 		.where({ roomId, active: true })
 		.update({ data: { active: false, leftAt: db.serverDate() } })
+	// endedAt 供 getOngoingRoom 惰性清理消息（结束超 5 分钟后删该房间 messages）；重复调用会刷新时间戳，无害
 	await db
 		.collection('rooms')
 		.doc(roomId)
-		.update({ data: { memberCount: 0 } })
+		.update({ data: { memberCount: 0, endedAt: db.serverDate() } })
 	if (!room.roomCode) return
 	for (const id of [_codeDocId(room.roomCode), room.roomCode]) {
 		try {

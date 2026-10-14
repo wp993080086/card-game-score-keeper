@@ -160,7 +160,7 @@ exports.main = async (event) => {
 		const closed = await db
 			.collection('rooms')
 			.where({ _id: roomId, status: 'gaming' })
-			.update({ data: { status: 'dissolved', memberCount: 0 } })
+			.update({ data: { status: 'dissolved', memberCount: 0, endedAt: db.serverDate() } })
 		if (!_updated(closed)) throw new Error('房间已结束')
 		await db
 			.collection('room_members')

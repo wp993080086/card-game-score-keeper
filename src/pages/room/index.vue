@@ -295,6 +295,27 @@ let roomWatcher: { close(): void } | null = null
 /** @description 页面还在时才开始成员监听（补标记的请求可能在离开页面后才回来）*/
 let pageAlive = true
 
+/** @description 监听断线重连上限（超限视为环境异常，提示退出重进，避免权限类错误无限重连）*/
+const WATCH_RETRY_MAX = 5
+
+/** @description 各监听器重连计数（key: members/messages/room）*/
+const watchRetries: TDict<number> = {}
+
+/** @description 监听断线兜底：延迟 3s 重建（watch 重建后会重推 init 快照，数据自动恢复一致）；超限提示退出重进*/
+const _reconnectWatch = (key: string, start: () => void) => {
+	if (!pageAlive) return
+	const n = (watchRetries[key] || 0) + 1
+	watchRetries[key] = n
+	console.error(`[room] ${key} 实时监听断开，重连 ${n}/${WATCH_RETRY_MAX}`)
+	if (n > WATCH_RETRY_MAX) {
+		uni.showToast({ title: '实时刷新已断开，请退出房间重新进入', icon: 'none' })
+		return
+	}
+	setTimeout(() => {
+		if (pageAlive) start()
+	}, 3000)
+}
+
 /** @description 加载更早消息进行中（防 scrolltoupper 连续触发）*/
 const loadingOlder = ref(false)
 
@@ -417,14 +438,16 @@ const _watchMembers = () => {
 			},
 			onError: (err) => {
 				console.error('[room] 成员实时监听失败:', err)
+				_reconnectWatch('members', _watchMembers)
 			}
 		})
 }
 
+/** @description 结算/解散弹窗只提示一次（重连重建监听后也不重复弹，标记放外层跨闭包共享）*/
+let roomPrompted = false
+
 /** @description 监听房间状态。解散时所有人确认后再离开。结算时房主由结算页自己跳转，其他人点「看战绩」再去对局详情 */
 const _watchRoom = () => {
-	// 结算/解散弹窗只提示一次（后续快照不再重复弹）
-	let prompted = false
 	roomWatcher = wx.cloud
 		.database()
 		.collection('rooms')
@@ -437,8 +460,8 @@ const _watchRoom = () => {
 				// rooms.qrFileID 的，弹窗早退拦掉更新会导致弹窗里永远显示"二维码"占位
 				roomInfo.value = room
 				// settling 是结算落库中的中间态，还没结束，不能当成解散把人带离
-				if (room.status === 'gaming' || room.status === 'settling' || prompted) return
-				prompted = true
+				if (room.status === 'gaming' || room.status === 'settling' || roomPrompted) return
+				roomPrompted = true
 				const settled = room.status === 'settled'
 				// 房主在结算页确认后会自己跳到对局详情。这里再弹，会被那次跳转马上关掉
 				if (settled && room.ownerOpenid && room.ownerOpenid === myOpenid.value) return
@@ -457,6 +480,7 @@ const _watchRoom = () => {
 			},
 			onError: (err) => {
 				console.error('[room] 房间状态监听失败:', err)
+				_reconnectWatch('room', _watchRoom)
 			}
 		})
 }
@@ -486,6 +510,7 @@ const _watchMessages = () => {
 			onError: (err) => {
 				// 常见于集合权限未放开读，控制台排查看这里
 				console.error('[room] 消息实时监听失败:', err)
+				_reconnectWatch('messages', _watchMessages)
 			}
 		})
 }

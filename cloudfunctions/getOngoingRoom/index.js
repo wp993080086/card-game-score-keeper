@@ -10,6 +10,12 @@ const db = cloud.database()
 /** 单次查询上限 */
 const PAGE_SIZE = 100
 
+/** 房间结束后 messages 保留时长（成员回看最终动态），超时由本函数惰性删除 */
+const MESSAGE_KEEP_MS = 5 * 60 * 1000
+
+/** 单次清理的房间数上限（防止积压时一次删太多拖慢响应） */
+const CLEAN_BATCH = 20
+
 /**
  * @description 兼容取时间戳
  * @param {Date|number|string} [v] 时间值
@@ -84,6 +90,32 @@ const _backfillActive = async (where) => {
 }
 
 /**
+ * @description 惰性清理已结束房间的 messages：结算/解散后保留 MESSAGE_KEEP_MS 供成员回看，
+ *   之后每次有人打开首页就顺手删一批（云函数 return 后进程冻结，做不了定时器）。
+ *   对局详情/流水走 settlements/game_records，messages 删除不影响任何历史查看
+ * @return {Promise<void>} 失败静默，不阻塞主流程
+ */
+const _cleanEndedMessages = async () => {
+	const _ = db.command
+	try {
+		const ended = await db
+			.collection('rooms')
+			.where({ status: _.in(['settled', 'dissolved']), endedAt: _.lt(new Date(Date.now() - MESSAGE_KEEP_MS)) })
+			.limit(CLEAN_BATCH)
+			.get()
+		const ids = ended.data.map((r) => r._id).filter(Boolean)
+		if (!ids.length) return
+		const res = await db
+			.collection('messages')
+			.where({ roomId: _.in(ids) })
+			.remove()
+		console.log('[getOngoingRoom] 清理已结束房间消息:', ids.length, '个房间, 删除', (res && res.deleted) || 0, '条')
+	} catch (err) {
+		console.error('[getOngoingRoom] 清理已结束房间消息失败:', err)
+	}
+}
+
+/**
  * @description 查询我的进行中牌局（首页卡片数据源）
  *   在场只看 active == true。结算进行中（settling）仍算进行中，方便房主回来把这局结完
  * @return {Promise<object>} { room: null } 或 { room: { roomId, roomCode, members } }
@@ -91,6 +123,9 @@ const _backfillActive = async (where) => {
 exports.main = async () => {
 	const { OPENID } = cloud.getWXContext()
 	const _ = db.command
+
+	// 顺手清理结束超时的房间消息（失败静默，不影响主流程）
+	await _cleanEndedMessages()
 
 	await _backfillActive({ openid: OPENID })
 	const activeRes = await db.collection('room_members').where({ openid: OPENID, active: true }).limit(20).get()

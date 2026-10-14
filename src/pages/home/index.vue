@@ -439,8 +439,6 @@ const _createRoom = () => {
 const _scanJoin = () => {
 	uni.scanCode({
 		success: (res: TAny) => {
-			// 开发期打出原始扫码结果，便于定位工具/真机对码内容的格式差异
-			console.log('[home] 扫码原始结果 path:', res.path, 'result:', res.result, 'scanType:', res.scanType)
 			const roomCode = _resolveRoomCode(String(res.result || ''), String(res.path || ''))
 			if (!roomCode) {
 				uni.showToast({ title: '未识别到房号，请用「输房号进房」', icon: 'none' })

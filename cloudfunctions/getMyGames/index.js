@@ -71,9 +71,17 @@ exports.main = async () => {
 		throw new Error('缺少身份')
 	}
 
-	// 我参与过的所有房间（含已退出的历史房间）
-	const mine = await _fetchAll('room_members', { openid: OPENID })
-	const roomIds = [...new Set(mine.map((m) => m.roomId))]
+	// 我参与过的房间聚合：按 roomId 分组取最新 joinedAt（一个房间一条结果）。
+	// 不全量拉 room_members——每次退房重进都会多一条记录，历史增长后全量拉取越来越慢
+	const $ = db.command.aggregate
+	const mineAgg = await db
+		.collection('room_members')
+		.aggregate()
+		.match({ openid: OPENID })
+		.group({ _id: '$roomId', lastJoinedAt: $.max('$joinedAt') })
+		.end()
+	const mine = mineAgg.list || []
+	const roomIds = mine.map((m) => m._id)
 	if (!roomIds.length) {
 		return { games: [] }
 	}
@@ -100,19 +108,23 @@ exports.main = async () => {
 		codeMap[r._id] = r.roomCode || ''
 	}
 
+	// 各房间最新加入时间（无快照确认时间时的兜底，避免落到 1970）
+	const joinTsMap = {}
+	for (const m of mine) {
+		joinTsMap[m._id] = _ts(m.lastJoinedAt)
+	}
+
 	const games = settledIds.map((id) => {
 		const snap = snapMap[id]
 		const scores = (snap && snap.netScores) || []
 		const mineScore = scores.find((s) => s.openid === OPENID)
-		// 成员文档写的是 joinedAt。没有快照时间时用它，避免读 createdAt 得到 0 后落到 1970
-		const joinTs = Math.max(...mine.filter((m) => m.roomId === id).map((m) => _ts(m.joinedAt)), 0)
 		return {
 			roomId: id,
 			roomCode: codeMap[id],
 			count: (snap && snap.recordCount) || 0,
 			net: mineScore ? mineScore.delta || 0 : 0,
 			memberCount: scores.length || 1,
-			lastTime: _ts(snap && snap.confirmedAt) || joinTs
+			lastTime: _ts(snap && snap.confirmedAt) || joinTsMap[id] || 0
 		}
 	})
 

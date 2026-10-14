@@ -22,5 +22,6 @@ export function callCloud<T = unknown>(name: string, data?: TDict): Promise<T> {
 export function cloudErrMsg(err: TAny): string {
 	const raw = String(err?.errMsg || err?.errMessage || err?.message || '')
 	const m = /errMsg:\s*Error:\s*([^\n]+)/.exec(raw)
-	return ((m ? m[1] : raw) || '').trim() || '未知错误'
+	// 兜底原文可能是多行堆栈或超长英文错误（网络失败等），压缩空白并限长，避免 toast 刷出整段日志
+	return (m ? m[1] : raw).replace(/\s+/g, ' ').trim().slice(0, 80) || '未知错误'
 }

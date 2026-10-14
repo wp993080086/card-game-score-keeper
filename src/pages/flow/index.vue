@@ -41,6 +41,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getRoomFlow } from '@/apis/game'
+import { cloudErrMsg } from '@/apis/cloud'
 import type { I_FlowItem } from '@/apis/game'
 
 defineOptions({
@@ -128,7 +129,7 @@ const _fetchFlow = (roomId: string) => {
 		})
 		.catch((err) => {
 			console.error('[flow] 流水加载失败:', err)
-			uni.showToast({ title: `流水加载失败：${err?.errMsg || err?.errMessage || err?.message || '未知错误'}`, icon: 'none' })
+			uni.showToast({ title: `流水加载失败：${cloudErrMsg(err)}`, icon: 'none' })
 		})
 		.finally(() => {
 			loading.value = false
