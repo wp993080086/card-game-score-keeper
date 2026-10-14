@@ -1,3 +1,8 @@
+/**
+ * @description Prettier 负责视觉格式;
+ * @type {import('prettier').Config}
+ * @see https://www.prettier.cn/docs/options.html
+ */
 module.exports = {
 	printWidth: 150, // 一行最多多少个字符
 	tabWidth: 2, // 指定每个缩进级别的空格数
