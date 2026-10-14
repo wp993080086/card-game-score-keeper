@@ -62,7 +62,7 @@ const _ts = (v) => {
 
 /**
  * @description 聚合我的全部已结算对局（战绩页数据源，跨房间）
- *   口径：只统计 status=settled 的房间；净额只算包含本人的转账记录；人数取结算快照（与对局详情一致）
+ *   口径：只统计 status=settled 的房间；净额、笔数、人数、时间都取结算快照（同一房间多份时留确认时间最新的一份）
  * @return {Promise<object>} { games: [{ roomId, roomCode, count, net, memberCount, lastTime }] }（lastTime 毫秒时间戳，倒序）
  */
 exports.main = async () => {
@@ -85,38 +85,13 @@ exports.main = async () => {
 	}
 	const settledIds = settledRooms.map((r) => r._id)
 
-	// 结算快照：参与人数 + 结算时间兜底（与对局详情页口径一致）
+	// 结算快照：同一房间有多份时按确认时间留最新一份。不再把流水重加一遍
 	const snapshots = await _fetchByRoomIds('settlements', settledIds)
 	const snapMap = {}
 	for (const s of snapshots) {
-		if (!snapMap[s.roomId]) {
+		const prev = snapMap[s.roomId]
+		if (!prev || _ts(s.confirmedAt) >= _ts(prev.confirmedAt)) {
 			snapMap[s.roomId] = s
-		}
-	}
-
-	// 全部转账流水
-	const records = await _fetchByRoomIds('game_records', settledIds)
-
-	// 按房间聚合：笔数 / 我参与记录的净额 / 打过牌的人 / 最后转账时间
-	const agg = {}
-	for (const id of settledIds) {
-		agg[id] = { count: 0, net: 0, players: {}, lastTime: 0 }
-	}
-	for (const rec of records) {
-		const a = agg[rec.roomId]
-		if (!a) {
-			continue
-		}
-		a.count += 1
-		for (const s of rec.scores || []) {
-			a.players[s.openid] = true
-			if (s.openid === OPENID) {
-				a.net += s.delta || 0
-			}
-		}
-		const t = _ts(rec.createdAt)
-		if (t > a.lastTime) {
-			a.lastTime = t
 		}
 	}
 
@@ -126,17 +101,18 @@ exports.main = async () => {
 	}
 
 	const games = settledIds.map((id) => {
-		const a = agg[id]
 		const snap = snapMap[id]
-		// 无流水对局：时间退回结算时间，再退回我加入该房的时间
-		const joinTs = Math.max(...mine.filter((m) => m.roomId === id).map((m) => _ts(m.createdAt)), 0)
+		const scores = (snap && snap.netScores) || []
+		const mineScore = scores.find((s) => s.openid === OPENID)
+		// 成员文档写的是 joinedAt。没有快照时间时用它，避免读 createdAt 得到 0 后落到 1970
+		const joinTs = Math.max(...mine.filter((m) => m.roomId === id).map((m) => _ts(m.joinedAt)), 0)
 		return {
 			roomId: id,
 			roomCode: codeMap[id],
-			count: a.count,
-			net: a.net,
-			memberCount: (snap && snap.netScores && snap.netScores.length) || Object.keys(a.players).length || 1,
-			lastTime: a.lastTime || _ts(snap && snap.confirmedAt) || joinTs
+			count: (snap && snap.recordCount) || 0,
+			net: mineScore ? mineScore.delta || 0 : 0,
+			memberCount: scores.length || 1,
+			lastTime: _ts(snap && snap.confirmedAt) || joinTs
 		}
 	})
 

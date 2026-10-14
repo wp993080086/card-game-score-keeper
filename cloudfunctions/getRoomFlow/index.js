@@ -35,13 +35,16 @@ exports.main = async (event) => {
 		throw new Error('你不在该房间')
 	}
 
-	// 昵称映射（同 settle 口径：每个 openid 取首条成员记录，含已退出）
-	const memAll = await db.collection('room_members').where({ roomId }).get()
+	// 昵称映射（同 settle：joinedAt 升序分页读完，后写覆盖，含已退出）
+	const memAll = []
+	for (;;) {
+		const res = await db.collection('room_members').where({ roomId }).orderBy('joinedAt', 'asc').skip(memAll.length).limit(PAGE_SIZE).get()
+		memAll.push(...res.data)
+		if (res.data.length < PAGE_SIZE) break
+	}
 	const info = {}
-	for (const m of memAll.data) {
-		if (!info[m.openid]) {
-			info[m.openid] = m
-		}
+	for (const m of memAll) {
+		info[m.openid] = m
 	}
 
 	// 分页取全部流水（时间倒序）

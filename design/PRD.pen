@@ -689,7 +689,7 @@
                   "type": "text",
                   "id": "PoXcZ",
                   "fill": "#666666",
-                  "content": "微信扫描二维码加入",
+                  "content": "请在小程序内扫码或输入房号",
                   "fontFamily": "Inter",
                   "fontSize": 14,
                   "fontWeight": "normal"
@@ -728,7 +728,7 @@
                   "type": "text",
                   "id": "r5htO7",
                   "fill": "#999999",
-                  "content": "邀请好友扫描以下二维码加入房间",
+                  "content": "微信扫一扫只能看到房号，不能直接进房",
                   "fontFamily": "Inter",
                   "fontSize": 12,
                   "fontWeight": "normal"

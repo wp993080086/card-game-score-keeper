@@ -52,7 +52,7 @@
 					</view>
 					<view v-if="!loading && !planList.length" class="card-empty">
 						<view class="ico">🃏</view>
-						<view class="txt">本局没有转账记录</view>
+						<view class="txt">{{ transferCount > 0 ? '本局已两清，无需再转' : '本局没有转账记录' }}</view>
 					</view>
 				</template>
 			</view>

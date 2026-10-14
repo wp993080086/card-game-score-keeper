@@ -45,7 +45,7 @@
 				</view>
 				<view v-else-if="!planList.length" class="card-empty">
 					<view class="ico">🃏</view>
-					<view class="txt">本局没有转账记录</view>
+					<view class="txt">{{ recordCount > 0 ? '本局已两清，无需再转' : '本局没有转账记录' }}</view>
 				</view>
 			</view>
 
@@ -84,7 +84,8 @@
 				<view class="desc">
 					<text v-if="isOwner">你是房主，退出将解散房间，</text>
 					<text v-if="isOwner">所有成员将被清出。</text>
-					<text v-else>确定要退出本房间吗？退出后可重新进房。</text>
+					<text v-if="isOwner && recordCount > 0">未结算积分不会进入战绩。</text>
+					<text v-if="!isOwner">确定要退出本房间吗？退出后可重新进房。</text>
 				</view>
 				<view class="dialog-btns">
 					<button class="btn outline" @click="_closeLeave">取消</button>
@@ -186,6 +187,9 @@ const { onAvatarError, avatarSrc } = useAvatarFallback()
 /** @description 最少转账方案（昵称渲染模型）*/
 const planList = ref<I_PlanItem[]>([])
 
+/** @description 本局流水笔数（方案为空但笔数大于 0 时是互相转平，不是没打过）*/
+const recordCount = ref(0)
+
 /** @description 每人净额快照（降序，MVP 取首条）*/
 const netScores = ref<I_NetScore[]>([])
 
@@ -259,6 +263,7 @@ const _fetchPreview = () => {
 	settle(roomId.value, true)
 		.then((res) => {
 			settled.value = res.settled
+			recordCount.value = res.recordCount || 0
 			netScores.value = res.netScores || []
 			planList.value = (res.transfers || []).map((t: I_TransferItem) => {
 				const from = res.netScores.find((s) => s.openid === t.fromOpenid)

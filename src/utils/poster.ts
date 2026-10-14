@@ -101,7 +101,8 @@ const _drawPoster = (node: TAny, qrPath: string, opts: I_PosterOptions): Promise
 		node.width = POSTER_W * dpr
 		node.height = posterH * dpr
 		const ctx = node.getContext('2d')
-		ctx.scale(dpr, dpr)
+		// 重复生成时 scale 会叠乘，先重置再按像素比缩放
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
 		// 背景
 		ctx.fillStyle = '#ffffff'
@@ -186,15 +187,42 @@ const _drawPoster = (node: TAny, qrPath: string, opts: I_PosterOptions): Promise
 	})
 }
 
-/** @description 导出画布为临时图片*/
+/** @description 导出画布为临时图片（宽高用画布像素尺寸，否则真机导出的图是坏的）*/
 const _exportPoster = (node: TAny): Promise<string> => {
+	const width = node.width
+	const height = node.height
 	return new Promise((resolve, reject) => {
 		wx.canvasToTempFilePath({
 			canvas: node,
+			x: 0,
+			y: 0,
+			width,
+			height,
+			destWidth: width,
+			destHeight: height,
+			fileType: 'png',
 			success: (res) => resolve(res.tempFilePath),
 			fail: reject
 		})
 	})
+}
+
+/** @description 分享面板读不到 http://tmp 时会显示裂图，先拷到用户目录 */
+const _toSharePath = (tempPath: string): string => {
+	try {
+		const fs = wx.getFileSystemManager()
+		const dest = `${wx.env.USER_DATA_PATH}/result-poster.png`
+		try {
+			fs.unlinkSync(dest)
+		} catch (err) {
+			// 第一次分享还没有旧文件
+		}
+		fs.copyFileSync(tempPath, dest)
+		return dest
+	} catch (err) {
+		console.error('[poster] 复制分享图失败:', err)
+		return tempPath
+	}
 }
 
 /** @description 生成战绩图临时文件（查画布→绘制→导出）；loading 由调用页自行控制*/
@@ -208,7 +236,7 @@ export const generateResultPoster = async (opts: I_PosterOptions): Promise<strin
 /** @description 弹系统图片分享面板（发送给朋友/收藏/下载；面板内保存无回调，精准反馈走「保存战绩图」入口）*/
 export const openSharePanel = (filePath: string, tag = '[poster]') => {
 	wx.showShareImageMenu({
-		path: filePath,
+		path: _toSharePath(filePath),
 		fail: (err) => {
 			// 用户取消不算错误
 			if (err?.errMsg && String(err.errMsg).includes('cancel')) return

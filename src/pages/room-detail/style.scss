@@ -190,13 +190,15 @@
 	opacity: 0.7;
 }
 
-/* 战绩图画布：屏外渲染，仅用于生成图片（canvas 2d 无法离屏创建） */
+/* 战绩图画布：必须留在渲染树里。left:-9999px 时部分真机导出的图是坏的，分享出去显示裂图 */
 .poster-canvas {
 	position: fixed;
-	left: -9999px;
+	left: 0;
 	top: 0;
 	width: 375px;
-	height: 620px;
+	height: 800px;
+	transform: translateX(-120vw);
+	pointer-events: none;
 }
 .stat-row {
 	display: flex;

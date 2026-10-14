@@ -72,13 +72,13 @@
 			<view class="popup" @click.stop>
 				<view class="close" @click="_closeQr">✕</view>
 				<view class="head">
-					<view class="desc">微信扫描二维码加入</view>
+					<view class="desc">请在小程序内扫码或输入房号</view>
 					<view class="room-row">
 						<text class="label">房号</text>
 						<text class="code">{{ roomCode }}</text>
 						<text class="copy" @click="_copyRoomCode">复制</text>
 					</view>
-					<view class="hint">邀请好友扫描以下二维码加入</view>
+					<view class="hint">微信扫一扫只能看到房号，不能直接进房</view>
 				</view>
 				<view class="qr-area">
 					<!-- createRoom 生成的房间码普通二维码（rooms.qrFileID），空则显示占位 -->
@@ -99,7 +99,7 @@
 					<text class="name">{{ transferTarget?.nickname }}</text>
 				</view>
 				<view class="input-wrap">
-					<input v-model="transferAmount" class="amount-input" type="number" placeholder="请输入积分" @confirm="_confirmTransfer" />
+					<input v-model="transferAmount" class="amount-input" type="number" maxlength="6" placeholder="请输入积分" @confirm="_confirmTransfer" />
 					<text class="suffix">分</text>
 				</view>
 				<view class="dialog-btns">
@@ -133,7 +133,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { onLoad, onShareAppMessage, onUnload } from '@dcloudio/uni-app'
-import { transfer } from '@/apis/room'
+import { getOngoingRoom, transfer } from '@/apis/room'
 import { cloudErrMsg } from '@/apis/cloud'
 import { useAvatarFallback } from '@/utils/avatar'
 
@@ -219,15 +219,21 @@ const rawMembers = ref<TAny[]>([])
 /** @description 消息原始文档（messages watch 快照 + 分页历史，asc 排列）*/
 const rawMessages = ref<TAny[]>([])
 
-/** @description 成员渲染模型（isOwner 依赖 roomInfo，用 computed 解析取数时序）*/
-const memberList = computed<I_Member[]>(() =>
-	rawMembers.value.map((m) => ({
-		openid: m.openid || '',
-		nickname: m.nickname || '',
-		avatarUrl: m.avatarUrl || '',
-		isOwner: !!m.openid && m.openid === roomInfo.value?.ownerOpenid
-	}))
-)
+/** @description 成员渲染模型（同一 openid 只留一条，避免重复在场记录叠出两个头像）*/
+const memberList = computed<I_Member[]>(() => {
+	const map = new Map<string, I_Member>()
+	for (const m of rawMembers.value) {
+		const openid = m.openid || ''
+		if (!openid) continue
+		map.set(openid, {
+			openid,
+			nickname: m.nickname || '',
+			avatarUrl: m.avatarUrl || '',
+			isOwner: openid === roomInfo.value?.ownerOpenid
+		})
+	}
+	return [...map.values()]
+})
 
 /** @description 邀请占位（产品约定：无论缺几人只显示 1 个加号；满员不显示）*/
 const inviteSlots = computed(() => ((roomInfo.value?.maxMembers ?? 4) > memberList.value.length ? 1 : 0))
@@ -286,6 +292,9 @@ let memberWatcher: { close(): void } | null = null
 let messageWatcher: { close(): void } | null = null
 let roomWatcher: { close(): void } | null = null
 
+/** @description 页面还在时才开始成员监听（补标记的请求可能在离开页面后才回来）*/
+let pageAlive = true
+
 /** @description 加载更早消息进行中（防 scrolltoupper 连续触发）*/
 const loadingOlder = ref(false)
 
@@ -338,13 +347,22 @@ onLoad((options: TAny) => {
 	}
 	_fetchRoomInfo()
 	_fetchSelf()
-	_watchMembers()
 	_watchMessages()
 	_watchRoom()
+	// 旧成员记录没有 active。先等云函数补上在场标记再监听，否则成员条会是空的
+	getOngoingRoom()
+		.catch((err) => {
+			console.error('[room] 补齐在场成员失败:', err)
+		})
+		.finally(() => {
+			if (!pageAlive) return
+			_watchMembers()
+		})
 })
 
 /** @description 离开页面关闭实时监听与轮播*/
 onUnload(() => {
+	pageAlive = false
 	memberWatcher?.close()
 	messageWatcher?.close()
 	roomWatcher?.close()
@@ -385,16 +403,17 @@ const _fetchSelf = () => {
 		})
 }
 
-/** @description 监听房间成员（roomId 全量），全量快照替换；leftAt 软删在前端过滤，避开 watch 指令查询兼容风险*/
+/** @description 只监听在场成员。历史全量监听超过默认 100 条时，后加入的人会消失。
+ *   条件是 roomId + active + joinedAt，云数据库需有这条组合索引 */
 const _watchMembers = () => {
 	const db = wx.cloud.database()
 	memberWatcher = db
 		.collection('room_members')
-		.where({ roomId: roomId.value })
+		.where({ roomId: roomId.value, active: true })
 		.orderBy('joinedAt', 'asc')
 		.watch({
 			onChange: (snapshot) => {
-				rawMembers.value = snapshot.docs.filter((m) => !m.leftAt)
+				rawMembers.value = snapshot.docs
 			},
 			onError: (err) => {
 				console.error('[room] 成员实时监听失败:', err)
@@ -417,7 +436,8 @@ const _watchRoom = () => {
 				// 房间文档有变就同步进 roomInfo（含初始快照）：createRoom 的二维码是异步生成回填
 				// rooms.qrFileID 的，弹窗早退拦掉更新会导致弹窗里永远显示"二维码"占位
 				roomInfo.value = room
-				if (room.status === 'gaming' || prompted) return
+				// settling 是结算落库中的中间态，还没结束，不能当成解散把人带离
+				if (room.status === 'gaming' || room.status === 'settling' || prompted) return
 				prompted = true
 				const settled = room.status === 'settled'
 				uni.showModal({
@@ -527,8 +547,8 @@ const _cancelTransfer = () => {
  *   成功后 payment 消息由 watch 推送进消息流，即到账反馈 */
 const _confirmTransfer = () => {
 	const amount = Number(transferAmount.value)
-	if (!Number.isInteger(amount) || amount <= 0) {
-		uni.showToast({ title: '请输入正整数积分', icon: 'none' })
+	if (!Number.isSafeInteger(amount) || amount < 1 || amount > 999999) {
+		uni.showToast({ title: '请输入 1 到 999999 的整数', icon: 'none' })
 		return
 	}
 	if (!transferTarget.value) return
